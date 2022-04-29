@@ -1,4 +1,5 @@
-FROM mcr.microsoft.com/windows:10.0.19042.1586
+ARG WINDOWS_VERSION=10.0.19042.1586
+FROM mcr.microsoft.com/windows:${WINDOWS_VERSION}
 MAINTAINER Nasajon <devops@nasajon.com.br>
 
 USER ContainerAdministrator
