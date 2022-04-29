@@ -1,0 +1,3 @@
+[submodule "erp-instalador"]
+	path = erp-instalador
+	url = git@github.com:Nasajon/erp-instalador.git
