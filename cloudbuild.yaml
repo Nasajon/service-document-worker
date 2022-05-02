@@ -20,4 +20,4 @@ steps:
   - 'southamerica-east1-docker.pkg.dev/$PROJECT_ID/service-document-worker/service-document-worker:latest'
   # Specify specific variants of images to be built. Or, remove the following 2 lines to default to all available variants.
   - --versions
-  - '1809'
+  - '1909'
