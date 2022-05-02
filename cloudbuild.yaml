@@ -17,8 +17,7 @@ steps:
 - name: 'us-docker.pkg.dev/gke-windows-tools/docker-repo/gke-windows-builder:latest'
   args:
   - --container-image-name
-  # Replace <REGISTRY_REGION> and <REPOSITORY>.
   - 'southamerica-east1-docker.pkg.dev/$PROJECT_ID/service-document-worker/service-document-worker:latest'
   # Specify specific variants of images to be built. Or, remove the following 2 lines to default to all available variants.
   - --versions
-  - '20H2,ltsc2019'
+  - '1809'
