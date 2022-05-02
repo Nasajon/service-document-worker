@@ -14,10 +14,10 @@
 
 timeout: 3600s
 steps:
-- name: 'us-docker.pkg.dev/gke-windows-tools/docker-repo/gke-windows-builder:1.15'
+- name: 'us-docker.pkg.dev/gke-windows-tools/docker-repo/gke-windows-builder:latest'
   args:
   - --container-image-name
   - 'southamerica-east1-docker.pkg.dev/$PROJECT_ID/service-document-worker/service-document-worker:latest'
   # Specify specific variants of images to be built. Or, remove the following 2 lines to default to all available variants.
   - --versions
-  - '1809'
+  - '20H2'
