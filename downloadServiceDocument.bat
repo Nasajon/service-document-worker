@@ -1,1 +1,0 @@
-curl.exe -u %nexus_user%:%nexus_password% -X GET https://nexus.nasajon.com.br/repository/erp/br/com/nasajon/nsjServiceDocumentEngine/2.2203.0.1786/nsjServiceDocumentEngine-2.2203.0.1786.exe --output nsjServiceDocumentEngine.exe

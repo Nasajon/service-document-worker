@@ -1,0 +1,12 @@
+version: '2'
+
+services:
+    # app:
+    #     image: nasajon/php:7.1-fpm-symfony-dev
+    #     restart: always
+    #     ports:
+    #         - "80:80"
+    #     volumes:
+    #         - $PWD:/var/www/html        
+    #     env_file:
+    #         - common.env
