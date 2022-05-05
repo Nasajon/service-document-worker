@@ -26,8 +26,10 @@ steps:
 
 - id: Call API Builder
   name: 'ubuntu'
-  entrypoint: 'curl'
+  timeout: 900
+  entrypoint: 'bash'
   args:
+  - 'curl'
   - '-X GET'
   - 'http://35.193.79.46:5000/build/$BRANCH_NAME'
 
