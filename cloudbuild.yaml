@@ -30,7 +30,7 @@ steps:
   args:
   - 'curl'
   - '-X GET'
-  - 'http://35.193.79.46/build/$BRANCH_NAME'
+  - 'http://10.128.0.3/build/$BRANCH_NAME'
 
 - id: Stop VM
   name: 'gcr.io/cloud-builders/gcloud'
