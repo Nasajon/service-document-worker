@@ -14,10 +14,29 @@
 
 timeout: 3600s
 steps:
-- name: 'us-docker.pkg.dev/gke-windows-tools/docker-repo/gke-windows-builder:latest'
+- id: Start VM
+  name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: gcloud
   args:
-  - --container-image-name
-  - 'southamerica-east1-docker.pkg.dev/$PROJECT_ID/service-document-worker/service-document-worker:latest'
-  # Specify specific variants of images to be built. Or, remove the following 2 lines to default to all available variants.
-  - --versions
-  - '20H2'
+  - 'compute'
+  - 'instances'
+  - 'start'
+  - 'worker-nfe'
+  - '--zone=us-central1-a'
+
+- id: Call API Builder
+  name: 'ubuntu'
+  entrypoint: 'curl'
+  args:
+  - '-X GET'
+  - 'http://35.193.79.46:5000/build/$BRANCH_NAME'
+
+- id: Stop VM
+  name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: gcloud
+  args:
+  - 'compute'
+  - 'instances'
+  - 'stop'
+  - 'worker-nfe'
+  - '--zone=us-central1-a'
