@@ -25,9 +25,8 @@ steps:
   - '--zone=us-central1-a'
 
 - id: Call API Builder
-  name: 'ubuntu'
+  name: 'gcr.io/cloud-builders/curl'
   timeout: 900s
-  entrypoint: 'bash'
   args:
   - 'curl'
   - '-X GET'
