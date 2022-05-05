@@ -26,7 +26,7 @@ steps:
 
 - id: Call API Builder
   name: 'ubuntu'
-  timeout: 900
+  timeout: 900s
   entrypoint: 'bash'
   args:
   - 'curl'
