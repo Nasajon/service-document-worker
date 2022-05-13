@@ -1,9 +1,6 @@
 from app.settings import flask_app
 from app.service.build_service import BuildService
-from flask import request
-from nsj_gcf_utils.exception import NotFoundException
 from nsj_gcf_utils.json_util import json_dumps
-from nsj_gcf_utils.rest_error_util import format_json_error
 
 BUILD_ROUTE = f'/build/<branch>'
 
@@ -11,10 +8,7 @@ BUILD_ROUTE = f'/build/<branch>'
 def build(branch: str):
     try:
         build_service = BuildService()
-        image_name = build_service.execute(branch)
-        response = {
-            "image_name": image_name
-        }
+        response = build_service.execute(branch)
         return (json_dumps(response), 200, {})
     except Exception as e:
         error = {
