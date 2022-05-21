@@ -174,7 +174,7 @@ class Tpedidos:
                 else:
                     strSituacao = strSituacao + ',' + str(sCod.value)
 
-        sql = """SELECT ID_PEDIDO, NUM_PEDIDO, NUM_EXTERNO, STATUS                                               
+        sql = """SELECT ID_PEDIDO, NUM_PEDIDO, NUM_EXTERNO, STATUS, TENTATIVAS_ADICIONAIS, PRIMEIRA_TENTATIVA, ULTIMA_TENTATIVA
                 FROM {0}.PEDIDOS  PED
                 WHERE PED.STATUS in(""" + strSituacao + """) and
                 PED.Processado = True
@@ -357,6 +357,30 @@ class Tpedido:
                               
                 self.conexao.execute(sql, [chave_de_acesso, numero_nf, iddocfis, novoStatus, msgAviso, idpedido])
                 self.registraLog.mensagem(idpedido, msgAviso, tipoMsg.serviceDocument, iddocservmsg)
+    
+    def atualizarTentativa(self, primeira_tentativa, ultima_tentativa, tentativa_adicional = 0):
+        idpedido = self.lstPedido['id_pedido']
+        if (idpedido == IsEmpty or None):
+            return
+        else:
+            novoStatus = Status.Reemitir.value
+            if tentativa_adicional == 0:
+                msgAviso = "Atualizando data e hora da primeira tentativa, que falhou."
+                processado = True
+            else:
+                processado = False
+                msgAviso = f"Gerando XML novamente de forma automática para a {tentativa_adicional+1}º tentativa de emissão."
+
+            sql = """update """ + schema + """.pedidos set
+                status = %s ,
+                tentativas_adicionais = %s ,
+                primeira_tentativa = %s ,
+                ultima_tentativa = %s ,
+                processado = %s
+                where id_pedido = %s """
+            
+            self.conexao.execute(sql, [novoStatus, tentativa_adicional, primeira_tentativa, ultima_tentativa, processado, idpedido])
+            self.registraLog.mensagem(idpedido, msgAviso, tipoMsg.sucesso)
 
     def obterProdutos(self, id_pedido):
         if (id_pedido == IsEmpty or None):

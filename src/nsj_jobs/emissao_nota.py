@@ -1,12 +1,13 @@
 # !/usr/bin/env python
 # -*- coding: cp1252 -*-
 
+from nsj_jobs.resources.envconfig import EnvConfig
 from nsj_jobs.service_document_cmd import ServiceDocumentCMD
 from nsj_jobs.dao import DAO, Status, StatusDocumento, Tp_Operacao, tipoMsg, Tpedidos, Tpedido
 from nsj_jobs.resources.job_command import JobCommand
 from nsj_jobs.resources.create_nota import montar_LayoutCalculaImpostos
 from datetime import date
-from datetime import datetime
+from datetime import datetime, timedelta
 import json # utilizado em modo debug
 
 
@@ -85,7 +86,7 @@ class EmissaoNota(JobCommand):
                                     break                    
                         else:
                             erro_falha = ( int(documento.get('status') ) in erros_documento) # erro ou falha
-                            if erro_falha:
+                            if not self.iterarTentativa(t_pedido, documento) and erro_falha:
                                 falhou = True
                                 self.banco.registraLog.mensagem(var_id_pedido, documento.get('mensagem_retorno'), 
                                     tipoMsg.serviceDocument, documento.get('documento') )
@@ -152,6 +153,40 @@ class EmissaoNota(JobCommand):
         except Exception as e:
             registro_execucao.informativo("Erro inexperado: {0}".format( str(e) ) )
             exit;
+
+    def iterarTentativa(self, t_pedido: Tpedido, documento):
+        # Retorna True se houverem tentativas restantes antes de falhar, False do contrário
+        dataHoraUltimaTentativaPedido = t_pedido.lstPedido['ultima_tentativa']
+        dataHoraUltimaTentativaDocumento = documento.get('datahora_inclusao')
+        dataHoraPrimeiraTentativa = t_pedido.lstPedido['primeira_tentativa']
+        tentativasAdicionais = t_pedido.lstPedido['tentativas_adicionais']
+        maximoTentativasConfig = int(EnvConfig.instance().maximo_tentativas)
+        formatoDataHora = "%Y-%m-%d %H:%M:%S.%f"
+
+        # Quando não houverem tentativas adicionais
+        if maximoTentativasConfig == 1:
+            if tentativasAdicionais == 0:
+                t_pedido.atualizarTentativa(dataHoraUltimaTentativaDocumento, dataHoraUltimaTentativaDocumento)
+            return False
+        
+        tentativaAdicionalAtual = tentativasAdicionais + 1
+        if tentativaAdicionalAtual < maximoTentativasConfig:
+            # Primeira tentativa no minuto 0 e a última 24 horas depois
+            intervalo_tentativas = (24*60) / (maximoTentativasConfig-1)
+
+            # Caso seja a primeira retentativa
+            if dataHoraPrimeiraTentativa is None and dataHoraUltimaTentativaPedido is None:
+                dataHoraPrimeiraTentativa = dataHoraUltimaTentativaDocumento
+                dataHoraUltimaTentativaPedido = dataHoraUltimaTentativaDocumento
+                # TODO atualizar primeira e ultimas tentativas neste momento?
+            
+            # Calcula a partir de quando deve ser a próxima tentativa
+            proximaTentativa = dataHoraPrimeiraTentativa + timedelta(minutes=tentativaAdicionalAtual*intervalo_tentativas)
+            if datetime.now() > proximaTentativa:
+                t_pedido.atualizarTentativa(dataHoraPrimeiraTentativa, dataHoraUltimaTentativaDocumento, tentativaAdicionalAtual)
+            return True
+
+        return False
 
 
     def validarDados(self, a_pedido: Tpedido):
