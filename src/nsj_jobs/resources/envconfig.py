@@ -21,7 +21,7 @@ class EnvConfig:
         self.id_execucao = uuid.uuid4()
         self.erp_user = os.getenv("erp_user", "MASTER")
         self.erp_password = os.getenv("erp_password", "")
-        self.maximo_tentativas = os.getenv("maximo_tentativas", "1")
+        self.maximo_tentativas = os.getenv("maximo_tentativas", "24")
 
     @staticmethod
     def instance():
