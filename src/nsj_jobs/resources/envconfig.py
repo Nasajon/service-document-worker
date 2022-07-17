@@ -14,7 +14,7 @@ class EnvConfig:
         self.database_name = os.getenv("database_name", "integratto2")
         self.database_user = os.getenv("database_user", "postgres")
         self.database_password = os.getenv("database_password", "postgres")
-        self.database_port = os.getenv("database_port", "5433")
+        self.database_port = os.getenv("database_port", "5432")
         self.dir_execucao = self._trata_diretorio_execucao()
         self.log_path = self.dir_execucao / "logs"
         self.log_level = os.getenv("log_level", "DEBUG")
