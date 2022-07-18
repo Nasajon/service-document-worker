@@ -136,7 +136,7 @@ Atualmente realizamos o deploy manualmente em uma máquina Windows.
 |erp_user|Usuário do ERP que deverá ser usado pelo Service Document|MASTER|
 |erp_password|Senha **CRIPTOGRAFADA** do usuário|N/A|
 |maximo_tentativas|Ao falhar uma tentativa de emissão, será o número de vezes que o worker tentará emitir novamente.|24|
-|frequencia_job|Intervalo de execução do Worker em milissegundos|300|
+|frequencia_job|Intervalo de execução do Worker em segundos|300|
 
 #### Deploy do contêiner
 Dentro da máquina Windows disponibilizada, deve-se baixar a imagem desejada (vide seção: `Build Automático`). Depois, basta executar o comando `docker run`. Deve-se usar a flag `-e` para definir as variáveis de ambiente as quais não se deseja usar o valor padrão e criar um volume com a flag `-v` contendo o certificado para emissão da nota. Conforme exemplo a seguir:
