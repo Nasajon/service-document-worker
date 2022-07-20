@@ -188,6 +188,7 @@ class Log:
 
     def informativo(self, mensagem):
         self._file.writelines(mensagem)
+        self._file.writelines("\n")
 
     def erro_execucao(self, mensagem, grava_exception_trace: bool = False):
         pass

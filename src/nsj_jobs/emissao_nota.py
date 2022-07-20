@@ -1,6 +1,7 @@
 # !/usr/bin/env python
 # -*- coding: cp1252 -*-
 
+import traceback
 from nsj_jobs.resources.envconfig import EnvConfig
 from nsj_jobs.service_document_cmd import ServiceDocumentCMD
 from nsj_jobs.dao import DAO, Status, StatusDocumento, Tp_Operacao, tipoMsg, Tpedidos, Tpedido
@@ -151,7 +152,9 @@ class EmissaoNota(JobCommand):
 
 
         except Exception as e:
-            registro_execucao.informativo("Erro inexperado: {0}".format( str(e) ) )
+            mensagem = "Erro inesperado: {0}".format(str(e))
+            mensagem += "\n".join(traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__))
+            registro_execucao.informativo(mensagem)
             exit;
 
     def iterarTentativa(self, t_pedido: Tpedido, documento):

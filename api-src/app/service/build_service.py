@@ -52,6 +52,7 @@ class BuildService:
         os.system(f"git checkout {branch}")
         # Updates erp-instalador submodule
         os.chdir(self.erp_instalador_submodule_dir)
+        os.system(f"git fetch")
         os.system(f"git checkout {branch}")
         os.system("git pull")
 
