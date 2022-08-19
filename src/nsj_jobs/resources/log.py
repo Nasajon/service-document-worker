@@ -212,7 +212,9 @@ class Log:
         logger.info(msg)
         
     def erro_execucao(self, mensagem, grava_exception_trace: bool = False):
-        pass
+        logger = logging.getLogger(self._nome_log)
+        logger.error(mensagem)
 
     def exception_execucao(self, mensagem):
-        pass
+        logger = logging.getLogger(self._nome_log)
+        logger.exception(mensagem)

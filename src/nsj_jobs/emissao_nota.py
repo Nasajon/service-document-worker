@@ -17,7 +17,7 @@ class EmissaoNota(JobCommand):
         self.banco = None
         self.nota_fiscal = None
 
-    def execute(self, entrada: dict, job, db, log, registro_execucao: Log):
+    def execute(self, entrada: dict, job, db, log, registro_execucao):
        
         try: 
             self.banco = DAO(db)
@@ -29,7 +29,7 @@ class EmissaoNota(JobCommand):
             
             path_Cancelamento = self.banco.xml_serviceDocument.obterCaminhoArquivo(74, 0)
             if path_Cancelamento is None:
-                registro_execucao.atencao('Diretório de cancelamento para salvar o arquivo xml não foi definido no Admin.')
+                registro_execucao.informativo('Diretório de cancelamento para salvar o arquivo xml não foi definido no Admin.')
                 exit
             
             # obtem os pedidos que ja foram processados (xml criados) da tabela de controle
@@ -53,10 +53,11 @@ class EmissaoNota(JobCommand):
                 var_id_pedido = pedido.get('id_pedido')
                 var_identificador = int(pedido.get('num_pedido') )
                 documentos = self.banco.obterDocumentosEnviados(var_identificador)
+                logging.info(f'Obtendo os registros do pedido de id: {var_id_pedido} e número: {var_identificador}.')
                 
                 if len(documentos) == 0:
                     
-                    registro_execucao.atencao(f'Id do Pedido: {var_id_pedido}. Documento não encontrado para o identificador: {var_identificador}')
+                    registro_execucao.informativo(f'Id do Pedido: {var_id_pedido}. Documento não encontrado para o identificador: {var_identificador}')
                     self.banco.registraLog.mensagem(
                         var_id_pedido, 
                         'Documento não encontrado para o identificador: ' + str(var_identificador), 
@@ -74,7 +75,7 @@ class EmissaoNota(JobCommand):
                                 novoStatus  = self.novoStatus(statusDocto, statusAtual)
 
                                 if (novoStatus is None) or (novoStatus == statusAtual):
-                                    registro_execucao.erro(f'Id do pedido: {var_id_pedido}. Novo status inválido: {novoStatus}')
+                                    registro_execucao.informativo(f'Id do pedido: {var_id_pedido}. Novo status inválido: {novoStatus}')
                                     self.banco.registraLog.mensagem(var_id_pedido, 'Novo Status inválido: ' + str(novoStatus) , 
                                             tipoMsg.inconsistencia, documento.get('documento') )
                                     continue 
@@ -95,7 +96,7 @@ class EmissaoNota(JobCommand):
                             if not self.iterarTentativa(t_pedido, documento) and erro_falha:
                                 falhou = True
                                 msg_retorno = documento.get('mensagem_retorno')
-                                registro_execucao.erro(f'Id do pedido: {var_id_pedido}. {msg_retorno}')
+                                registro_execucao.informativo(f'Id do pedido: {var_id_pedido}. {msg_retorno}')
                                 self.banco.registraLog.mensagem(var_id_pedido, msg_retorno, 
                                     tipoMsg.serviceDocument, documento.get('documento') )
                     
@@ -139,7 +140,7 @@ class EmissaoNota(JobCommand):
                 else:
                     pathdefault = path_Envio
 
-                ## registro_execucao.informativo('Iniciando a criacao do arquivo xml...')
+                registro_execucao.informativo('Iniciando a criacao do arquivo xml...')
                 arquivo = montar_LayoutCalculaImpostos(t_pedido, pathdefault, strNum_nf)
 
                 if (arquivo != ''):
@@ -150,7 +151,7 @@ class EmissaoNota(JobCommand):
                     total_proc = total_proc  + 1
                 else:
                     strAviso = 'Erro ao criar arquivo xml para o pedido ' + str(var_num_pedido)
-                    registro_execucao.erro(f'Id do pedido: {var_id_pedido}. {strAviso}')
+                    registro_execucao.erro_execucao(f'Id do pedido: {var_id_pedido}. {strAviso}')
                     self.banco.registraLog.mensagem(var_id_pedido, strAviso, tipoMsg.inconsistencia)
 
                 ## registro_execucao.informativo(strAviso)
@@ -167,7 +168,7 @@ class EmissaoNota(JobCommand):
         except Exception as e:
             mensagem = "Erro inesperado: {0}".format(str(e))
             mensagem += "\n".join(traceback.format_exception(e))
-            registro_execucao.excecao(mensagem)
+            registro_execucao.exception_execucao(mensagem)
             exit;
 
     def iterarTentativa(self, t_pedido: Tpedido, documento):
