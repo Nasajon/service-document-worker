@@ -207,10 +207,10 @@ class Log:
 
     # Código do RegistroExecucaoDao. Somente para mock, pois não tem como salvar na tabela de log do jobmanager por fora do jobmanager
 
-    def informativo(self, mensagem):
-        self._file.writelines(mensagem)
-        self._file.writelines("\n")
-
+    def informativo(self, msg):
+        logger = logging.getLogger(self._nome_log)
+        logger.info(msg)
+        
     def erro_execucao(self, mensagem, grava_exception_trace: bool = False):
         pass
 
