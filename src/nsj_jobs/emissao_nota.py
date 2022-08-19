@@ -53,7 +53,7 @@ class EmissaoNota(JobCommand):
                 var_id_pedido = pedido.get('id_pedido')
                 var_identificador = int(pedido.get('num_pedido') )
                 documentos = self.banco.obterDocumentosEnviados(var_identificador)
-                logging.info(f'Obtendo os registros do pedido de id: {var_id_pedido} e número: {var_identificador}.')
+                registro_execucao.informativo(f'Obtendo os registros do pedido de id: {var_id_pedido} e número: {var_identificador}.')
                 
                 if len(documentos) == 0:
                     
