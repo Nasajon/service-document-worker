@@ -1,5 +1,4 @@
-# !/usr/bin/env python
-# -*- coding: cp1252 -*-
+import sys
 from nsj_jobs.resources.envconfig import EnvConfig
 
 import datetime
@@ -10,6 +9,7 @@ import time
 import threading
 import traceback
 import json
+import logging
 
 
 class LogLevel(enum.Enum):
@@ -30,7 +30,21 @@ class Log:
         self._lock_escrita = threading.Lock()
         self._db = db
         self._nome_log = nome_log
+        self.config_logger()
 
+    
+    def config_logger(self):
+        data = datetime.datetime.now()
+        file_handler = logging.FileHandler(f'{data}.log', 'a')
+        stream_handler = logging.StreamHandler(sys.stdout)
+
+        logging.basicConfig(
+            logging.getLogger(self._nome_log),
+            level=logging.INFO,
+            format='%(levelname)s:%(asctime)s:%(message)s:',
+            handlers=[file_handler, stream_handler]
+        )
+    
     def debug(self, msg: str, print_traceback: bool = False):
         """
         Escreve uma mensagem para debug no log.
@@ -38,6 +52,8 @@ class Log:
         msg = msg.__str__()
         env_log_level = LogLevel(EnvConfig.instance().log_level)
         if (env_log_level == LogLevel.DEBUG):
+            logger = logging.getLogger(self._nome_log)
+            logger.debug(msg)
             self._log(LogLevel.DEBUG, msg, print_traceback, False)
 
     def info(self, msg: str, print_traceback: bool = False):
@@ -45,19 +61,20 @@ class Log:
         Escreve uma mensagem informativa no log.
         """
 
-        print(msg)  # TODO
 
         msg = msg.__str__()
         env_log_level = LogLevel(EnvConfig.instance().log_level)
         if (
                 (env_log_level == LogLevel.DEBUG) or
                 (env_log_level == LogLevel.INFO)
-        ):
+        ):  
+            logger = logging.getLogger(self._nome_log)
+            logger.info(msg)
             self._log(LogLevel.INFO, msg, print_traceback, False)
 
     def atencao(self, msg: str, print_traceback: bool = False):
         """
-        Escreve uma mensagem de aten��o no log.
+        Escreve uma mensagem de atenção no log.
         """
         msg = msg.__str__()
         env_log_level = LogLevel(EnvConfig.instance().log_level)
@@ -65,7 +82,9 @@ class Log:
                 (env_log_level == LogLevel.DEBUG) or
                 (env_log_level == LogLevel.INFO) or
                 (env_log_level == LogLevel.ATENCAO)
-        ):
+        ):  
+            logger = logging.getLogger(self._nome_log)
+            logger.warning(msg)
             self._log(LogLevel.ATENCAO, msg, print_traceback, False)
 
     def erro(self, msg: str, print_traceback: bool = False):
@@ -73,8 +92,7 @@ class Log:
         Escreve uma mensagem de erro no log.
         """
         msg = msg.__str__()
-        print(msg)  # TODO
-        print(traceback.format_stack())
+        # print(traceback.format_stack())
         env_log_level = LogLevel(EnvConfig.instance().log_level)
         if (
                 (env_log_level == LogLevel.DEBUG) or
@@ -82,15 +100,16 @@ class Log:
                 (env_log_level == LogLevel.ATENCAO) or
                 (env_log_level == LogLevel.ERRO)
         ):
+            logger = logging.getLogger(self._nome_log)
+            logger.error(msg)  
             self._log(LogLevel.ERRO, msg, print_traceback, False)
 
     def excecao(self, msg: str, print_exception_trace: bool = True):
         """
-        Escreve uma mensagem de erro, originado por uma exce��o, no log.
+        Escreve uma mensagem de erro, originado por uma exceção, no log.
         """
         msg = msg.__str__()
-        print(msg)  # TODO
-        print(traceback.format_exc())
+        # print(traceback.format_exc())
         env_log_level = LogLevel(EnvConfig.instance().log_level)
         if (
                 (env_log_level == LogLevel.DEBUG) or
@@ -98,6 +117,8 @@ class Log:
                 (env_log_level == LogLevel.ATENCAO) or
                 (env_log_level == LogLevel.ERRO)
         ):
+            logger = logging.getLogger(self._nome_log)
+            logger.exception(msg)
             self._log(LogLevel.ERRO, msg, False, print_exception_trace)
 
     def flush(self):
@@ -145,19 +166,19 @@ class Log:
 
     def _open_log_file(self, nome_log: str):
         """
-        Verifica as condi��es b�sicas para abrir o arquivo de log para escrita
-        (diret�rio base, se deve apagar um arquivo de log anterior e recriar, etc).
+        Verifica as condições básicas para abrir o arquivo de log para escrita
+        (diretório base, se deve apagar um arquivo de log anterior e recriar, etc).
 
-        É importante destacar que se utiliza um estrat�gia de log rotativo por dia,
-        (isto �, no m�ximo haver�o 31 arquivos de log no diret�rio, pois a cada dia
-        do m�s � criado um arquivo com nome no padr�o "log_<DIA>.txt", e assim o log
-        mais antigo disponível deve datar de um m�s antes).
+        É importante destacar que se utiliza um estratégia de log rotativo por dia,
+        (isto é, no máximo haverão 31 arquivos de log no diretório, pois a cada dia
+        do mês é criado um arquivo com nome no padrão "log_<DIA>.txt", e assim o log
+        mais antigo disponível deve datar de um mês antes).
         """
 
-        # Recuperando o diret�rio de logs:
+        # Recuperando o diretório de logs:
         dir_log = pathlib.Path(EnvConfig.instance().log_path)
 
-        # Verificando se o diret�rio de log existe (e criando, caso constr�rio):
+        # Verificando se o diretório de log existe (e criando, caso contrário):
         if not os.path.exists(dir_log):
             os.makedirs(dir_log)
 
@@ -170,21 +191,21 @@ class Log:
 
         # Verificando se o arquivo existe:
         if os.path.isfile(file_log):
-            # Recuperando a data de modifica��o do arquivo:
+            # Recuperando a data de modificação do arquivo:
             data_modificacao = datetime.datetime.fromtimestamp(
                 os.path.getmtime(file_log))
 
-            # Excluindo o arquivo se n�o for de hoje:
+            # Excluindo o arquivo se não for de hoje:
             if (data_modificacao.date() < datetime.datetime.now().date()):
                 os.remove(file_log)
 
-        # Abrindo o arquivo em modo de concatena��o (append):
+        # Abrindo o arquivo em modo de concatenação (append):
         self._file = open(file_log, "a")
 
     def __del__(self):
         self._file.close()
 
-    # C�digo do RegistroExecucaoDao. Somente para mock, pois n�o tem como salvar na tabela de log do jobmanager por fora do jobmanager
+    # Código do RegistroExecucaoDao. Somente para mock, pois não tem como salvar na tabela de log do jobmanager por fora do jobmanager
 
     def informativo(self, mensagem):
         self._file.writelines(mensagem)
