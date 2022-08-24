@@ -16,7 +16,7 @@
   mensagem character varying(100),
   chave_de_acesso character varying(44),
   numero_nf character varying(15),
-  serie_nf character varying(3),
+  serie_nf character varying(5),
   id_docfis uuid,
   processado boolean NOT NULL DEFAULT false,
   datahora_processamento timestamp(0) without time zone,

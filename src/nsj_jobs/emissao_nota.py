@@ -148,13 +148,13 @@ class EmissaoNota(JobCommand):
             # Execução do ServiceDocument
             # dirInstalacaoERP = self.banco.dir_instalacao_erp.obterDiretorioInstalacao()
             dirInstalacaoERP = "C:\\Nasajon Sistemas\\Integratto2\\"
-            serviceDocument = ServiceDocumentCMD(dirInstalacaoERP)
+            serviceDocument = ServiceDocumentCMD(dirInstalacaoERP, entrada)
             serviceDocument.executar()
 
 
         except Exception as e:
             mensagem = "Erro inesperado: {0}".format(str(e))
-            registro_execucao.informativo(mensagem)
+            registro_execucao.exception_execucao(mensagem)
             raise e
 
     def iterarTentativa(self, t_pedido: Tpedido, documento):
@@ -337,4 +337,4 @@ class EmissaoNota(JobCommand):
 
 # Para teste
 if __name__ == '__main__':
-   EmissaoNota().execute_cmd()
+   EmissaoNota().execute_cmd({'env':'docker'})
