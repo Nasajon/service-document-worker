@@ -46,6 +46,7 @@ def montar_LayoutCalculaImpostos(t_Pedido: Tpedido, pathFile, num_notaFiscal):
         createNodeChild('TIPOOPERACAO', t_Pedido.lstPedido[0]['tp_operacao'], doc, nivel_1)
         createNodeChild('LOCALESTOQUE', t_Pedido.lstPedido[0]['localestoque'], doc, nivel_1)
         createNodeChild('FORMAPAGAMENTO', t_Pedido.lstPedido[0]['formapagamento'], doc, nivel_1)
+        createNodeChild('REFERENCIAEXTERNA ', t_Pedido.lstPedido[0]['num_externo'], doc, nivel_1)
         createNodeChild('CADASTRADOPOR', 'MESTRE', doc, nivel_1)
         
         # DESTINATARIO
