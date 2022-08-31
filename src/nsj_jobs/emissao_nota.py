@@ -8,7 +8,6 @@ from nsj_jobs.resources.job_command import JobCommand
 from nsj_jobs.resources.create_nota import montar_LayoutCalculaImpostos
 from datetime import date
 from datetime import datetime, timedelta
-import logging
 import json # utilizado em modo debug
 
 
@@ -16,10 +15,12 @@ class EmissaoNota(JobCommand):
     def __init__(self):
         self.banco = None
         self.nota_fiscal = None
+        self.registro_execucao = None
 
     def execute(self, entrada: dict, job, db, log, registro_execucao):
        
         try: 
+            self.registro_execucao = registro_execucao
             self.banco = DAO(db)
             registro_execucao.informativo('Obtendo o caminho configurado para salvar os arquivos xml.')
             path_Envio = self.banco.xml_serviceDocument.obterCaminhoArquivo(70, 0)
@@ -213,25 +214,25 @@ class EmissaoNota(JobCommand):
         strAviso = ''
         if ( a_pedido.lstCliente == None):
             strAviso = 'Cliente não encontrado para o CNPJ/CPF informado: ' + str(a_pedido.lstPedido[0]['cnpj_cliente'])
-            logging.warning(strAviso)
+            self.registro_execucao.atencao(strAviso)
             self.banco.registraLog.mensagem( strPedido, strAviso, tipoMsg.inconsistencia)
             return False
 
         if ( a_pedido.lstEndCliente == None):
             strAviso = 'Endereço do Cliente não retornou registros!'
-            logging.warning(strAviso)
+            self.registro_execucao.atencao(strAviso)
             self.banco.registraLog.mensagem( strPedido, strAviso, tipoMsg.inconsistencia)
             return False 
 
         if ( a_pedido.lstFormaPagamento == None):
             strAviso = 'Forma de Pagamento não retornou registros!'
-            logging.warning(strAviso)
+            self.registro_execucao.atencao(strAviso)
             self.banco.registraLog.mensagem( strPedido, strAviso, tipoMsg.inconsistencia)
             return False       
         
         if ( a_pedido.lstEstabelecimento == None):
             strAviso = 'Estabelecimento não encontrado para CNPJ Informado: ' + str(a_pedido.lstPedido[0]['cnpj_estabelecimento'])
-            logging.warning(strAviso)
+            self.registro_execucao.atencao(strAviso)
             self.banco.registraLog.mensagem( strPedido, strAviso, tipoMsg.inconsistencia)
             return False
         else:
@@ -243,7 +244,7 @@ class EmissaoNota(JobCommand):
         var_loc_estoq= str( a_pedido.lstPedido[0]['localestoque'] )
       
         try:
-            logging.info('Validando dados do pedido.')
+            self.registro_execucao.informativo('Validando dados do pedido.')
             # validar dados do pedido:
             if a_pedido.lstPedido[0]['id_operacao'] == '':
                strAviso = strmsg.format('Código da Operação', 'COD_OPERACAO', 'vazio' )
@@ -279,11 +280,11 @@ class EmissaoNota(JobCommand):
                 erroLista.append( strAviso )
 
             # validar dados do cliente:
-            logging.info('Validando dados do cliente.')
+            self.registro_execucao.informativo('Validando dados do cliente.')
             if ( a_pedido.lstCliente[0]['id_cliente'] == '' or None):
                 erroLista.append('Cliente não encontrado com o CNPJ/CPF informado: ' + str(a_pedido.lstPedido[0]['cnpj_cliente']) )
 
-            logging.info('Validando dados do produto.')
+            self.registro_execucao.informativo('Validando dados do produto.')
             # validar dados do produto (itens do pedido):
             for produto in a_pedido.lstProdutos:
                 if produto.get('prod_nao_existe') == 1:
@@ -326,7 +327,7 @@ class EmissaoNota(JobCommand):
     def listarErros(self, id, lista, a_tipo: tipoMsg):
         for err in lista:
             self.banco.registraLog.mensagem( id, err, a_tipo)
-            logging.error(f'Id do pedido:{id}. {err}')
+            self.registro_execucao.erro(f'Id do pedido:{id}. {err}')
 
     def novoStatus(self, status_Doc:int, statusAtualPedido:int):
         

@@ -52,8 +52,6 @@ class Log:
         msg = msg.__str__()
         env_log_level = LogLevel(EnvConfig.instance().log_level)
         if (env_log_level == LogLevel.DEBUG):
-            logger = logging.getLogger(self._nome_log)
-            logger.debug(msg)
             self._log(LogLevel.DEBUG, msg, print_traceback, False)
 
     def info(self, msg: str, print_traceback: bool = False):
@@ -68,8 +66,6 @@ class Log:
                 (env_log_level == LogLevel.DEBUG) or
                 (env_log_level == LogLevel.INFO)
         ):  
-            logger = logging.getLogger(self._nome_log)
-            logger.info(msg)
             self._log(LogLevel.INFO, msg, print_traceback, False)
 
     def atencao(self, msg: str, print_traceback: bool = False):
@@ -83,8 +79,6 @@ class Log:
                 (env_log_level == LogLevel.INFO) or
                 (env_log_level == LogLevel.ATENCAO)
         ):  
-            logger = logging.getLogger(self._nome_log)
-            logger.warning(msg)
             self._log(LogLevel.ATENCAO, msg, print_traceback, False)
 
     def erro(self, msg: str, print_traceback: bool = False):
@@ -100,8 +94,6 @@ class Log:
                 (env_log_level == LogLevel.ATENCAO) or
                 (env_log_level == LogLevel.ERRO)
         ):
-            logger = logging.getLogger(self._nome_log)
-            logger.error(msg)  
             self._log(LogLevel.ERRO, msg, print_traceback, False)
 
     def excecao(self, msg: str, print_exception_trace: bool = True):
@@ -117,8 +109,6 @@ class Log:
                 (env_log_level == LogLevel.ATENCAO) or
                 (env_log_level == LogLevel.ERRO)
         ):
-            logger = logging.getLogger(self._nome_log)
-            logger.exception(msg)
             self._log(LogLevel.ERRO, msg, False, print_exception_trace)
 
     def flush(self):
@@ -129,7 +119,20 @@ class Log:
             self._lock_escrita.release()
 
     def _log(self, tipo: LogLevel, msg: str, print_traceback: bool, print_exception_trace: bool):
-        pass
+        
+        logger = logging.getLogger(self._nome_log)
+        
+        if tipo == LogLevel.DEBUG:
+            logger.debug(msg)
+        elif tipo == LogLevel.INFO:
+            logger.info(msg)
+        elif tipo == LogLevel.ATENCAO:
+            logger.warning(msg)
+        elif tipo == LogLevel.ERRO:
+            logger.error(msg)
+        elif tipo == LogLevel.ERRO and print_exception_trace == True:
+            logger.exception(msg)
+        
         # sql = "insert into log (nome_job, texto, level) values (%s, %s, %s)"
 
         # self._lock_escrita.acquire()
@@ -208,13 +211,10 @@ class Log:
     # Código do RegistroExecucaoDao. Somente para mock, pois não tem como salvar na tabela de log do jobmanager por fora do jobmanager
 
     def informativo(self, msg):
-        logger = logging.getLogger(self._nome_log)
-        logger.info(msg)
+        self.info(msg)
         
     def erro_execucao(self, mensagem, grava_exception_trace: bool = False):
-        logger = logging.getLogger(self._nome_log)
-        logger.error(mensagem)
+        self.erro(mensagem)
 
     def exception_execucao(self, mensagem):
-        logger = logging.getLogger(self._nome_log)
-        logger.exception(mensagem)
+        self.excecao(mensagem)
