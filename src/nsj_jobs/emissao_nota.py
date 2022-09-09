@@ -287,6 +287,10 @@ class EmissaoNota(JobCommand):
             self.registro_execucao.informativo('Validando dados do produto.')
             # validar dados do produto (itens do pedido):
             for produto in a_pedido.lstProdutos:
+                
+                if ((produto.get('sem_saldo') == 1) and (produto.get('mensagem_erro') != '')):
+                    erroLista.append(produto.get('mensagem_erro'))
+
                 if produto.get('prod_nao_existe') == 1:
                     strAviso = strmsg.format('Código do Produto', 'COD_PRODUTO', produto.get('cod_produto') )
                     erroLista.append( strAviso )

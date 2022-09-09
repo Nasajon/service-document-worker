@@ -408,6 +408,8 @@ class Tpedido:
 
         sql = """SELECT
               """+ campos +"""
+                    0 as SEM_SALDO, 
+                    '' AS MENSAGEM_ERRO
                     FROM {}.ITENSPEDIDOS ITE
                     LEFT JOIN ESTOQUE.PRODUTOS PROD ON ( UPPER(PROD.CODIGO) = UPPER(ITE.COD_PRODUTO) or  UPPER(PROD.codigodebarras) = UPPER(ITE.COD_PRODUTO) )            
                     WHERE ITE.ID_PEDIDO = %s and not ite.generico
@@ -419,8 +421,10 @@ class Tpedido:
 
         sql = """SELECT 
               """+ campos +"""
+                    (CASE WHEN PROD.sem_saldo THEN 1 ELSE 0 END) as sem_saldo, 
+                    coalesce(ITE.MENSAGEM_ERRO, '') as mensagem_erro
                     FROM estoque.recupera_produtos_especificos_de_produto_generico(%s) ITE
-                    LEFT JOIN ESTOQUE.PRODUTOS PROD ON ( UPPER(PROD.CODIGO) = UPPER(ITE.COD_PRODUTO) or  UPPER(PROD.codigodebarras) = UPPER(ITE.COD_PRODUTO) )
+                    LEFT JOIN ESTOQUE.PRODUTOS PROD ON ( UPPER(PROD.CODIGO) = UPPER(ITE.COD_PRODUTO))
                     ORDER BY ITE.COD_PRODUTO"""
             
         lstPedidosGenericos = self.conexao.execute_query_to_dict(sql, [id_pedido]);
