@@ -386,8 +386,7 @@ class Tpedido:
         if (id_pedido == IsEmpty or None):
             return None
 
-        sql = """SELECT 
-                    ITE.COD_PRODUTO,
+        campos = """ITE.COD_PRODUTO,
                     (CASE WHEN PROD.CODIGO IS NULL THEN 1 ELSE 0 END) AS PROD_NAO_EXISTE,
                     PROD.ESPECIFICACAO,
                     PROD.TIPI, 
@@ -405,14 +404,28 @@ class Tpedido:
                     0.00	AS VALORFRETE,
                     0.00	AS VALORSEGURO,
                     0.00	AS VALOROUTRASDESPESAS,
-                    ITE.valor_desconto AS VALORDESCONTO    
+                    ITE.valor_desconto AS VALORDESCONTO"""
+
+        sql = """SELECT
+              """+ campos +"""
                     FROM {}.ITENSPEDIDOS ITE
-                    LEFT JOIN ESTOQUE.PRODUTOS PROD ON ( UPPER(PROD.CODIGO) = UPPER(ITE.COD_PRODUTO) )            
-                    WHERE ITE.ID_PEDIDO = %s
+                    LEFT JOIN ESTOQUE.PRODUTOS PROD ON ( UPPER(PROD.CODIGO) = UPPER(ITE.COD_PRODUTO) or  UPPER(PROD.codigodebarras) = UPPER(ITE.COD_PRODUTO) )            
+                    WHERE ITE.ID_PEDIDO = %s and not ite.generico
                     ORDER BY ITE.COD_PRODUTO"""
             
         sql = sql.format(schema)
-        return self.conexao.execute_query_to_dict(sql, [id_pedido])
+        lstPedidos = self.conexao.execute_query_to_dict(sql, [id_pedido]);
+
+
+        sql = """SELECT 
+              """+ campos +"""
+                    FROM estoque.recupera_produtos_especificos_de_produto_generico(%s) ITE
+                    LEFT JOIN ESTOQUE.PRODUTOS PROD ON ( UPPER(PROD.CODIGO) = UPPER(ITE.COD_PRODUTO) or  UPPER(PROD.codigodebarras) = UPPER(ITE.COD_PRODUTO) )
+                    ORDER BY ITE.COD_PRODUTO"""
+            
+        lstPedidosGenericos = self.conexao.execute_query_to_dict(sql, [id_pedido]);
+
+        return lstPedidos + lstPedidosGenericos;
             
     def obterEstabelecimento(self, id_pedido):
         sql = """SELECT 
