@@ -54,7 +54,7 @@ class EmissaoNota(JobCommand):
                 var_id_pedido = pedido.get('id_pedido')
                 var_identificador = int(pedido.get('num_pedido') )
                 documentos = self.banco.obterDocumentosEnviados(var_identificador)
-                registro_execucao.informativo(f'Obtendo os registros do pedido de id: {var_id_pedido} e nÃºmero: {var_identificador}.')
+                registro_execucao.informativo(f'Obtendo os registros do pedido de id: {var_id_pedido} e número: {var_identificador}.')
                 
                 if len(documentos) == 0:
                     
@@ -76,8 +76,8 @@ class EmissaoNota(JobCommand):
                                 novoStatus  = self.novoStatus(statusDocto, statusAtual)
 
                                 if (novoStatus is None) or (novoStatus == statusAtual):
-                                    registro_execucao.informativo(f'Id do pedido: {var_id_pedido}. Novo status invÃ¡lido: {novoStatus}')
-                                    self.banco.registraLog.mensagem(var_id_pedido, 'Novo Status invÃ¡lido: ' + str(novoStatus) , 
+                                    registro_execucao.informativo(f'Id do pedido: {var_id_pedido}. Novo status inválido: {novoStatus}')
+                                    self.banco.registraLog.mensagem(var_id_pedido, 'Novo Status inválido: ' + str(novoStatus) , 
                                             tipoMsg.inconsistencia, documento.get('documento') )
                                     continue 
                                 else:
