@@ -25,13 +25,13 @@ class EmissaoNota(JobCommand):
             registro_execucao.informativo('Obtendo o caminho configurado para salvar os arquivos xml.')
             path_Envio = self.banco.xml_serviceDocument.obterCaminhoArquivo(70, 0)
             if path_Envio is None:
-                registro_execucao.informativo('Diretório de envio para salvar o arquivo xml não foi definido no Admin.')
-                exit
+                registro_execucao.informativo('Diretório de envio para salva do arquivo xml não foi definido no Admin.')
+                return {"mensagem": "Diretório de envio para salva do arquivo xml não foi definido no Admin."}
             
             path_Cancelamento = self.banco.xml_serviceDocument.obterCaminhoArquivo(74, 0)
             if path_Cancelamento is None:
-                registro_execucao.informativo('Diretório de cancelamento para salvar o arquivo xml não foi definido no Admin.')
-                exit
+                registro_execucao.informativo('Diretório de cancelamento para salva do arquivo xml não foi definido no Admin.')
+                return {"mensagem": "Diretório de cancelamento para salva do arquivo xml não foi definido no Admin."}
             
             # obtem os pedidos que ja foram processados (xml criados) da tabela de controle
             # obtem os registros de envios de xml em documentos (servicedocument.documentos)
@@ -162,7 +162,7 @@ class EmissaoNota(JobCommand):
             # Execução do ServiceDocument
             # dirInstalacaoERP = self.banco.dir_instalacao_erp.obterDiretorioInstalacao()
             dirInstalacaoERP = "C:\\Nasajon Sistemas\\Integratto2\\"
-            serviceDocument = ServiceDocumentCMD(dirInstalacaoERP)
+            serviceDocument = ServiceDocumentCMD(dirInstalacaoERP, entrada)
             serviceDocument.executar()
 
 
@@ -364,4 +364,4 @@ class EmissaoNota(JobCommand):
 
 # Para teste
 if __name__ == '__main__':
-   EmissaoNota().execute_cmd()
+   EmissaoNota().execute_cmd({'env':'docker'})

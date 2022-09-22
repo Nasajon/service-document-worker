@@ -42,7 +42,7 @@ class JobCommand:
             #            entrada = json.load(f)
 
             # entrada = dict()
-            if len(sys.argv) > 1:
+            if len(sys.argv) > 1 and entrada is None:
                 entrada = json.loads(sys.argv[0])
 
             log.debug("Entrada a seguir:")
