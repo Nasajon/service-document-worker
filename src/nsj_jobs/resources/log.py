@@ -39,7 +39,6 @@ class Log:
         stream_handler = logging.StreamHandler(sys.stdout)
 
         logging.basicConfig(
-            logging.getLogger(self._nome_log),
             level=logging.INFO,
             format='%(levelname)s:%(asctime)s:%(message)s:',
             handlers=[file_handler, stream_handler]
