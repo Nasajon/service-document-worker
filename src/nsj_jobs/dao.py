@@ -404,7 +404,7 @@ class Tpedido:
                     0.00	AS VALORFRETE,
                     0.00	AS VALORSEGURO,
                     0.00	AS VALOROUTRASDESPESAS,
-                    ITE.valor_desconto AS VALORDESCONTO"""
+                    ITE.valor_desconto AS VALORDESCONTO,"""
 
         sql = """SELECT
               """+ campos +"""
