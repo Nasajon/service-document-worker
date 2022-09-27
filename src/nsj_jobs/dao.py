@@ -421,7 +421,7 @@ class Tpedido:
 
         sql = """SELECT 
               """+ campos +"""
-                    (CASE WHEN PROD.sem_saldo THEN 1 ELSE 0 END) as sem_saldo, 
+                    (CASE WHEN ITE.sem_saldo THEN 1 ELSE 0 END) as sem_saldo, 
                     coalesce(ITE.MENSAGEM_ERRO, '') as mensagem_erro
                     FROM estoque.recupera_produtos_especificos_de_produto_generico(%s) ITE
                     LEFT JOIN ESTOQUE.PRODUTOS PROD ON ( UPPER(PROD.CODIGO) = UPPER(ITE.COD_PRODUTO))
