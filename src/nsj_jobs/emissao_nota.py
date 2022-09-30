@@ -169,7 +169,6 @@ class EmissaoNota(JobCommand):
         except Exception as e:
             mensagem = "Erro inesperado: {0}".format(str(e))
             registro_execucao.exception_execucao(mensagem)
-            exit;
 
     def iterarTentativa(self, t_pedido: Tpedido, documento):
         # Retorna True se houverem tentativas restantes antes de falhar, False do contrário
