@@ -160,8 +160,8 @@ class EmissaoNota(JobCommand):
             ## print("Total Lidos: {0} | Total Processados:{1}, Total Falhas:{2}".format(str(total_reg), str(total_proc), str(tot_falha) ) )
 
             # Execução do ServiceDocument
-            # dirInstalacaoERP = self.banco.dir_instalacao_erp.obterDiretorioInstalacao()
-            dirInstalacaoERP = "C:\\Nasajon Sistemas\\Integratto2\\"
+            dirInstalacaoERP = self.banco.dir_instalacao_erp.obterDiretorioInstalacao()
+            # dirInstalacaoERP = "C:\\Nasajon Sistemas\\Integratto2\\"
             serviceDocument = ServiceDocumentCMD(dirInstalacaoERP, entrada)
             serviceDocument.executar()
 
