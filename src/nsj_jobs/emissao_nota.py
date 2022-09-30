@@ -168,7 +168,6 @@ class EmissaoNota(JobCommand):
 
         except Exception as e:
             mensagem = "Erro inesperado: {0}".format(str(e))
-            mensagem += "\n".join(traceback.format_exception(e))
             registro_execucao.exception_execucao(mensagem)
             exit;
 
