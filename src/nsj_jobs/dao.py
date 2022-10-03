@@ -64,7 +64,7 @@ class registra_log:
         else:
             var_id_doc_msg = None
 
-        if (id_pedido == IsEmpty or None):
+        if (id_pedido == IsEmpty or id_pedido is None):
             return None 
 
         valor_Tipo  = tipo.value
@@ -102,9 +102,9 @@ class xml_service_document:
                 Limit 1"""
   
         qry = self.conexao.execute_query_to_dict(sql, [valorcampo, aplicacao])
-        if ( len(qry) == 0 or None ):
+        if ( len(qry) == 0 ):
             return None
-        elif (qry[0]['valor'] == None) or (qry[0]['valor'] == IsEmpty):
+        elif (qry[0]['valor'] is None) or (qry[0]['valor'] == IsEmpty):
             return None
         else:
             return qry[0]['valor']
@@ -121,9 +121,9 @@ class dir_instalacao_erp:
                 Limit 1"""
   
         qry = self.conexao.execute_query_to_dict(sql, [])
-        if ( len(qry) == 0 or None ):
+        if ( len(qry) == 0 ):
             return None
-        elif (qry[0]['valor'] == None) or (qry[0]['valor'] == IsEmpty):
+        elif (qry[0]['valor'] is None) or (qry[0]['valor'] == IsEmpty):
             return None
         else:
             return qry[0]['valor']
@@ -209,7 +209,7 @@ class Tpedido:
 
 
     def id_pedido(self):
-        if (self.lstPedido['id_pedido'] == IsEmpty or None):
+        if (self.lstPedido['id_pedido'] == IsEmpty or self.lstPedido['id_pedido'] is None):
             return IsEmpty
         else:
             return str( self.lstPedido['id_pedido'] )
@@ -262,7 +262,7 @@ class Tpedido:
            self.obterPedidoId(id)
 
     def obterPedidoId(self, id_pedido):
-        if (id_pedido == IsEmpty or None):
+        if (id_pedido == IsEmpty or id_pedido is None):
             return None
 
         sql = """SELECT 
@@ -292,7 +292,7 @@ class Tpedido:
 
         sql = sql.format(schema)
         self.lstPedido = self.conexao.execute_query_to_dict(sql, [id_pedido])
-        if ( len(self.lstPedido) == 0 or None) :
+        if ( len(self.lstPedido) == 0 ) :
             return None
         else:
             self.obterDadosPedido(id_pedido)
@@ -330,7 +330,7 @@ class Tpedido:
 
     def updatePedido(self):
         idpedido = self.lstPedido['id_pedido']
-        if (idpedido == IsEmpty or None):
+        if (idpedido == IsEmpty or idpedido is None):
             return
         else:    
             chave_de_acesso = self.camposAtualizar.get('chave_de_acesso')
@@ -360,7 +360,7 @@ class Tpedido:
     
     def atualizarTentativa(self, primeira_tentativa, ultima_tentativa, tentativa_adicional = 0):
         idpedido = self.lstPedido['id_pedido']
-        if (idpedido == IsEmpty or None):
+        if (idpedido == IsEmpty or idpedido is None):
             return
         else:
             novoStatus = Status.Reemitir.value
@@ -383,7 +383,7 @@ class Tpedido:
             self.registraLog.mensagem(idpedido, msgAviso, tipoMsg.sucesso)
 
     def obterProdutos(self, id_pedido):
-        if (id_pedido == IsEmpty or None):
+        if (id_pedido == IsEmpty or id_pedido is None):
             return None
 
         campos = """ITE.COD_PRODUTO,
@@ -446,7 +446,7 @@ class Tpedido:
         
         sql = sql.format(schema)
         qry = self.conexao.execute_query_to_dict(sql, [id_pedido])
-        if (len(qry) == 0 or None):
+        if (len(qry) == 0):
             return None
         else:
             return qry
@@ -468,7 +468,7 @@ class Tpedido:
 
         sql = sql.format(schema)
         qry = self.conexao.execute_query_to_dict(sql, [id_pedido])
-        if (len(qry) == 0 or None):
+        if (len(qry) == 0):
             return None
         else:
             return qry
@@ -496,7 +496,7 @@ class Tpedido:
             LIMIT 1"""
             
         qry = self.conexao.execute_query_to_dict(sql, [id_cliente])
-        if (len(qry) == 0 or None):
+        if (len(qry) == 0):
             return None
         else:
             return qry
@@ -561,7 +561,7 @@ class DAO:
        #         AND c.cfop = """ + quotedString(num_cfop)
 
         qry = self.conexao.execute_query_to_dict(sql)
-        if (len(qry) == 0 or None):
+        if (len(qry) == 0):
             return False
         else:
             return (qry[0]['cfop_ok'] != None) and (qry[0]['cfop_ok'] == 1)
