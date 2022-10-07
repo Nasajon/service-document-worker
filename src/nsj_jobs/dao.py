@@ -386,7 +386,7 @@ class Tpedido:
         if (id_pedido == IsEmpty or id_pedido is None):
             return None
 
-        campos = """ITE.COD_PRODUTO,
+        campos = """COALESCE(PROD.CODIGO, ITE.COD_PRODUTO) AS COD_PRODUTO,
                     (CASE WHEN PROD.CODIGO IS NULL THEN 1 ELSE 0 END) AS PROD_NAO_EXISTE,
                     PROD.ESPECIFICACAO,
                     PROD.TIPI, 
