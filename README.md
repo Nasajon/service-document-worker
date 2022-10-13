@@ -141,7 +141,7 @@ Atualmente realizamos o deploy manualmente em uma máquina Windows.
 #### Deploy do contêiner
 Dentro da máquina Windows disponibilizada, deve-se baixar a imagem desejada (vide seção: `Build Automático`). Depois, basta executar o comando `docker run`. Deve-se usar a flag `-e` para definir as variáveis de ambiente as quais não se deseja usar o valor padrão e criar um volume com a flag `-v` contendo o certificado para emissão da nota. Conforme exemplo a seguir:
 
-> TODO: exemplo
+> TODO: exemplo.
 
 Para mais informações: [Docker run reference](https://docs.docker.com/engine/reference/run/)
 
