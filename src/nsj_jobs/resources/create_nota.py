@@ -253,9 +253,6 @@ def montar_LayoutCalculaImpostos(t_Pedido: Tpedido, pathFile, num_notaFiscal):
         nivel_1 = createNode('INFORMACOESADICIONAIS', base, doc)
         createNodeChild('INFORMACOESINTERES', '', doc, nivel_1)
         createNodeChild('INFORMACOESSISTEMA', '', doc, nivel_1)
-        createNodeChild('INFORMACOESMANUAIS', '', doc, nivel_1)
-        createNodeChild('INFORMACOESINTERES', '', doc, nivel_1)
-        createNodeChild('INFORMACOESSISTEMA', '', doc, nivel_1)
         createNodeChild('INFORMACOESMANUAIS', t_Pedido.lstPedido[0]['observacao'], doc, nivel_1)
 
         # FORMA DE PAGAMENTO 
