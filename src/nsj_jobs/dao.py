@@ -414,7 +414,7 @@ class Tpedido:
                     ) 		AS FIGURATRIBUTARIA,
                     ITE.CFOP,
                     ITE.DOCUMENTOREFERENCIADO_CHAVE,
-                    0.00	AS VALORFRETE,
+                    ITE.VALOR_FRETE	AS VALORFRETE,
                     0.00	AS VALORSEGURO,
                     0.00	AS VALOROUTRASDESPESAS,
                     ITE.valor_desconto AS VALORDESCONTO,"""
