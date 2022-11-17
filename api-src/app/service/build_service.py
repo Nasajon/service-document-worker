@@ -49,6 +49,7 @@ class BuildService:
         clone_response = os.system(f"git clone git@github.com:Nasajon/service-document-worker.git {self.working_dir} --recursive")
         if clone_response != 0:
             raise Exception("Exception when trying to clone worker repository")
+        os.chdir(self.working_dir)
         os.system(f"git checkout {branch}")
         # Updates erp-instalador submodule
         os.chdir(self.erp_instalador_submodule_dir)
