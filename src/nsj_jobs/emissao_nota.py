@@ -97,7 +97,7 @@ class EmissaoNota(JobCommand):
                             if not self.iterarTentativa(t_pedido, documento) and erro_falha:
                                 falhou = True
                                 msg_retorno = documento.get('mensagem_retorno')
-                                registro_execucao.informativo(f'Id do pedido: {var_id_pedido}. {msg_retorno}')
+                                # registro_execucao.informativo(f'Id do pedido: {var_id_pedido}. {msg_retorno}')
                                 self.banco.registraLog.mensagem(var_id_pedido, msg_retorno, 
                                     tipoMsg.serviceDocument, documento.get('documento') )
                     
@@ -293,9 +293,9 @@ class EmissaoNota(JobCommand):
                     strAviso = strmsg.format('Código do Produto', 'COD_PRODUTO', produto.get('cod_produto') )
                     erroLista.append( strAviso )
                 
-                if not self.banco.cfopValido(produto.get('cfop')):
-                    strAviso = strmsg.format('CFOP', 'CFOP', produto.get('cfop') )
-                    erroLista.append( strAviso )
+                # if not self.banco.cfopValido(produto.get('cfop')):
+                #     strAviso = strmsg.format('CFOP', 'CFOP', produto.get('cfop') )
+                #     erroLista.append( strAviso )
 
                 var_loc_estoq = str( produto.get('localestoque') )   
 
