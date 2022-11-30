@@ -45,10 +45,8 @@ def montar_LayoutCalculaImpostos(t_Pedido: Tpedido, pathFile, num_notaFiscal):
             'SERIE', t_Pedido.lstPedido[0]['serie_nf'],  doc, nivel_1)
         createNodeChild(
             'SUBSERIE', t_Pedido.lstPedido[0]['subserie'], doc, nivel_1)
-        createNodeChild(
-            'DATAEMISSAO', t_Pedido.lstPedido[0]['datasaidaentrada'], doc, nivel_1)
-        createNodeChild('DATASAIDAENTRADA',
-                        t_Pedido.lstPedido[0]['datasaidaentrada'], doc, nivel_1)
+        createNodeChild('DATAEMISSAO', t_Pedido.lstPedido[0]['datasaidaentrada'] if t_Pedido.lstPedido[0]['datasaidaentrada'] >= datetime.now().date() else datetime.now().date(), doc, nivel_1)
+        createNodeChild('DATASAIDAENTRADA', t_Pedido.lstPedido[0]['datasaidaentrada'] if t_Pedido.lstPedido[0]['datasaidaentrada'] >= datetime.now().date() else datetime.now().date(), doc, nivel_1)
         createNodeChild('DATALANCAMENTO',
                         t_Pedido.lstPedido[0]['datalancamento'], doc, nivel_1)
         createNodeChild(
