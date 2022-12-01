@@ -102,27 +102,6 @@ def montar_LayoutCalculaImpostos(t_Pedido: Tpedido, pathFile, num_notaFiscal):
     createNodeChild(
         'REFERENCIA', t_Pedido.lstEndCliente[0]['referencia'], doc, nivel_2)
 
-    # ENDERECO DE ENTREGA
-    nivel_1 = createNode('ENTREGA', base, doc)
-    createNodeChild(
-        'TIPOLOGRADOURO', t_Pedido.endEntrega['tipo_logradouro'], doc, nivel_1)
-    createNodeChild(
-        'LOGRADOURO', t_Pedido.endEntrega['logradouro'], doc, nivel_1)
-    createNodeChild(
-        'NUMERO', t_Pedido.endEntrega['numero'], doc, nivel_1)
-    createNodeChild(
-        'COMPLEMENTO', t_Pedido.endEntrega['complemento'], doc, nivel_1)
-    createNodeChild('CEP', t_Pedido.endEntrega['cep'], doc, nivel_1)
-    createNodeChild(
-        'BAIRRO', t_Pedido.endEntrega['bairro'], doc, nivel_1)
-    createNodeChild(
-        'CODIGOMUNICIPIO', t_Pedido.endEntrega['codigo_municipio'], doc, nivel_1)
-    createNodeChild(
-        'MUNICIPIO', t_Pedido.endEntrega['nome_municipio'], doc, nivel_1)
-    createNodeChild('UF', t_Pedido.endEntrega['uf'], doc, nivel_1)
-    createNodeChild(
-        'PAIS', t_Pedido.endEntrega['codigo_pais'], doc, nivel_1)
-
     # PRODUTOS
     valor_total_nota = 0
     for produto in t_Pedido.lstProdutos:
