@@ -153,7 +153,9 @@ class Tpedidos:
                 DT_EMISSAO 	AS DATASAIDAENTRADA,
                 DT_EMISSAO	AS DATALANCAMENTO,
                 LOCALESTOQUE,
-                CFOP                                 
+                CFOP,
+                TENTATIVAS_ADICIONAIS, 
+                PRIMEIRA_TENTATIVA                                 
                 FROM {}.PEDIDOS  PED
                 WHERE PED.STATUS in (""" + strSituacao + """) and
                 PED.Processado = %s
@@ -174,9 +176,9 @@ class Tpedidos:
                 else:
                     strSituacao = strSituacao + ',' + str(sCod.value)
 
-        sql = """SELECT ID_PEDIDO, NUM_PEDIDO, NUM_EXTERNO, STATUS, TENTATIVAS_ADICIONAIS, PRIMEIRA_TENTATIVA, ULTIMA_TENTATIVA
+        sql = """SELECT ID_PEDIDO, NUM_PEDIDO, NUM_EXTERNO, STATUS, TENTATIVAS_ADICIONAIS, PRIMEIRA_TENTATIVA, ULTIMA_TENTATIVA, datahora_processamento
                 FROM {0}.PEDIDOS  PED
-                WHERE PED.STATUS in(""" + strSituacao + """) and
+                WHERE PED.STATUS in (""" + strSituacao + """) and
                 PED.Processado = True
                 AND PED.EMITIR = True
                 And Ped.chave_de_acesso Is null
@@ -384,6 +386,20 @@ class Tpedido:
             
             self.conexao.execute(sql, [novoStatus, tentativa_adicional, primeira_tentativa, ultima_tentativa, processado, idpedido])
             self.registraLog.mensagem(idpedido, msgAviso, tipoMsg.sucesso)
+
+    def registrarPrimeiraTentativaParaReemissao(self):
+        idpedido = self.pedido['id_pedido']
+        if (idpedido == IsEmpty or idpedido is None):
+            return
+        else:
+            novoStatus = Status.Reemitir.value
+
+            sql = """update """ + schema + """.pedidos set
+                status = %s ,
+                primeira_tentativa = %s
+                where id_pedido = %s """
+
+            self.conexao.execute(sql, [novoStatus, datetime.now(), idpedido])
 
     def obterProdutos(self, id_pedido):
         if (id_pedido == IsEmpty or id_pedido is None):
