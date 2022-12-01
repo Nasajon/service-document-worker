@@ -164,9 +164,9 @@ class Tpedidos:
                 DT_EMISSAO 	AS DATASAIDAENTRADA,
                 DT_EMISSAO	AS DATALANCAMENTO,
                 LOCALESTOQUE,
-                CFOP                                    
+                CFOP                                 
                 FROM {}.PEDIDOS  PED
-                WHERE PED.STATUS in(""" + strSituacao + """) and
+                WHERE PED.STATUS in (""" + strSituacao + """) and
                 PED.Processado = %s
                 AND PED.EMITIR = TRUE
                 ORDER BY PED.dt_emissao"""
@@ -202,7 +202,7 @@ class Tpedido:
         self.conexao = conexao_banco
         self.registraLog = registra_log(conexao_banco)
 
-        self.lstPedido = None
+        self.pedido = None
         self.lstEstabelecimento = None
         self.lstCliente = None
         self.lstEndCliente = None
@@ -219,10 +219,10 @@ class Tpedido:
             'id_doc_serv_msg': None}
 
     def id_pedido(self):
-        if (self.lstPedido['id_pedido'] == IsEmpty or self.lstPedido['id_pedido'] is None):
+        if (self.pedido['id_pedido'] == IsEmpty or self.pedido['id_pedido'] is None):
             return IsEmpty
         else:
-            return str(self.lstPedido['id_pedido'])
+            return str(self.pedido['id_pedido'])
 
     def id_cliente(self):
         if self.lstCliente['id_cliente'] is None:
@@ -240,13 +240,13 @@ class Tpedido:
         if self.id_pedido == IsEmpty:
             return -1
         else:
-            return int(self.lstPedido['status'])
+            return int(self.pedido['status'])
 
     def num_pedido(self):
-        if (self.lstPedido['num_pedido'] is None) or (self.lstPedido['num_pedido'] == IsEmpty):
+        if (self.pedido['num_pedido'] is None) or (self.pedido['num_pedido'] == IsEmpty):
             return None
         else:
-            return self.lstPedido['num_pedido']
+            return self.pedido['num_pedido']
 
     def NumPedidoFormatado(self):
         numPedido = self.num_pedido
@@ -258,7 +258,7 @@ class Tpedido:
         return str(numPedido)
 
     def retornaPedido(self):
-        return self.lstPedido
+        return self.pedido
 
     def retornaProdutos(self):
         if self.lstProdutos is None:
@@ -297,16 +297,18 @@ class Tpedido:
                 SERIE_NF,
                 '00' AS SUBSERIE,
                 LOCALESTOQUE,
-                CFOP                                    
+                CFOP,
+                TENTATIVAS_ADICIONAIS, 
+                PRIMEIRA_TENTATIVA                                       
                 FROM {}.PEDIDOS PED WHERE PED.id_pedido = %s"""
 
         sql = sql.format(schema)
-        self.lstPedido = self.conexao.execute_query_to_dict(sql, [id_pedido])
-        if (len(self.lstPedido) == 0):
+        pedidos = self.conexao.execute_query_to_dict(sql, [id_pedido])
+        if (len(pedidos) == 0):
             return None
         else:
             self.obterDadosPedido(id_pedido)
-            return self.lstPedido
+            self.pedido = pedidos[0]
 
     def obterDadosPedido(self, idpedido: str):
 
@@ -322,7 +324,7 @@ class Tpedido:
         self.lstFormaPagamento = self.obterFormasPagamentos(idpedido)
 
     def updateSituacao(self, status_value: int):
-        idpedido = self.lstPedido['id_pedido']
+        idpedido = self.pedido['id_pedido']
         if idpedido != IsEmpty:
             sql = 'update {}.pedidos set status = %s where id_pedido = %s'
             sql = sql.format(schema)
@@ -339,7 +341,7 @@ class Tpedido:
             self.conexao.execute(sql, [idPedido])
 
     def updatePedido(self):
-        idpedido = self.lstPedido['id_pedido']
+        idpedido = self.pedido['id_pedido']
         if (idpedido == IsEmpty or idpedido is None):
             return
         else:
@@ -371,7 +373,7 @@ class Tpedido:
                     idpedido, msgAviso, tipoMsg.serviceDocument, iddocservmsg)
 
     def atualizarTentativa(self, primeira_tentativa, ultima_tentativa, tentativa_adicional=0):
-        idpedido = self.lstPedido['id_pedido']
+        idpedido = self.pedido['id_pedido']
         if (idpedido == IsEmpty or idpedido is None):
             return
         else:
