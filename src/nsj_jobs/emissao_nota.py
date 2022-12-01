@@ -37,20 +37,19 @@ class EmissaoNota(JobCommand):
             # obtem os registros de envios de xml em documentos (servicedocument.documentos)
             # atualiza a tabela de pedidos, de acordo com os status do envio do xml em documentos
 
-            # Aberto = 0 | Rejeitado = 2 | Reemitir = 3 | Cancelamento_Fiscal = 5
-            situacoes = [Status.Aberto, Status.Rejeitado, Status.Reemitir, Status.Cancelamento_Fiscal]
-
             erros_documento = [ StatusDocumento.sdcErroProcessamento.value,
                                 StatusDocumento.sdcErroEmissao.value,
                                 StatusDocumento.sdcErroConsulta.value,
-                                StatusDocumento.sdcRespondidoComFalha.value]             
+                                StatusDocumento.sdcRespondidoComFalha.value]
+            # Aberto = 0 | Reemitir = 3 | Cancelamento_Fiscal = 5
+            situacoes = [Status.Aberto, Status.Reemitir, Status.Cancelamento_Fiscal]
+          
             registro_execucao.informativo('Obtendo pedidos que ja foram processados (xml criados) da tabela de controle.')
             pedidos = self.banco.t_pedidos.obterPedidos_Processados(situacoes)
             t_pedido = Tpedido(db)
 
             registro_execucao.informativo('Obtendo os registros de envios de xml em documentos (servicedocument.documentos).')
             for pedido in pedidos:
-                falhou = False
                 var_id_pedido = pedido.get('id_pedido')
                 var_identificador = int(pedido.get('num_pedido') )
                 documentos = self.banco.obterDocumentosEnviados(var_identificador)
@@ -64,12 +63,12 @@ class EmissaoNota(JobCommand):
                         'Documento não encontrado para o identificador: ' + str(var_identificador), 
                         tipoMsg.serviceDocument)
                 else:
-                    t_pedido.lstPedido = pedido
+                    t_pedido.pedido = pedido
                     
                     registro_execucao.informativo('Verificando os registros de logs criados para o documento')
                     for documento in documentos:
                         if ( int(documento.get('status') ) == StatusDocumento.sdcTransmitido.value ):
-                            if not(documento.get('chave_emissao') is None): 
+                            if documento.get('chave_emissao') is not None: 
                                 # sucesso! Status = 2
                                 statusDocto = documento.get('status')
                                 statusAtual = pedido.get('status')
@@ -90,27 +89,27 @@ class EmissaoNota(JobCommand):
                                     t_pedido.camposAtualizar['mensagem']  = documento.get('mensagem_retorno')
                                     t_pedido.camposAtualizar['id_doc_serv_msg'] = documento.get('documento')
                                     t_pedido.updatePedido()
-                                    falhou = False
                                     break                    
-                        else:
-                            erro_falha = ( int(documento.get('status') ) in erros_documento) # erro ou falha
-                            if not self.iterarTentativa(t_pedido, documento) and erro_falha:
-                                falhou = True
+                        elif int(documento.get('status')) in erros_documento:
+                            if documento.get('id_docfis') is not None:
+                                t_pedido.updateSituacao(Status.Rejeitado.value)
                                 msg_retorno = documento.get('mensagem_retorno')
                                 # registro_execucao.informativo(f'Id do pedido: {var_id_pedido}. {msg_retorno}')
                                 self.banco.registraLog.mensagem(var_id_pedido, msg_retorno, 
                                     tipoMsg.serviceDocument, documento.get('documento') )
+                            else:
+                                tentar_denovo = self.iterarTentativa(t_pedido)
+                                strAviso = documento.get('mensagem_retorno')
+                                registro_execucao.erro_execucao(f'Id do pedido: {var_id_pedido}. {strAviso}')
+                                self.banco.registraLog.mensagem(var_id_pedido, strAviso, tipoMsg.serviceDocument)
+                                if not tentar_denovo:
+                                    t_pedido.updateSituacao(Status.Rejeitado.value)
                     
-                    if falhou:
-                        t_pedido.updateSituacao(Status.Rejeitado.value) #atualiza o status para 2
-
                 # fim loop documento enviados
             # fim loop pedidos.
 
             # inicia o loop para criacao dos arquivos XML
             # obtem os pedidos que ainda nao foram processados: (processado = False , emitir = True)
-            situacoes.clear
-            situacoes = [Status.Aberto, Status.Reemitir, Status.Cancelamento_Fiscal]
      
             registro_execucao.informativo('Obtendo os pedidos que ainda não foram processados.')
             pedidos = self.banco.t_pedidos.obterPedidos(situacoes, False)
@@ -124,17 +123,19 @@ class EmissaoNota(JobCommand):
                 strNum_nf = '00000'
                 var_id_pedido  = pedido['id_pedido']
                 var_num_pedido = pedido['num_pedido']
+                registro_execucao.informativo('Processando o pedido ' + str(var_num_pedido))
 
                 t_pedido.obterPedidoId( var_id_pedido )
                 dados_ok = self.validarDados(t_pedido)
                 if not dados_ok:
+                    tentar_denovo = self.iterarTentativa(t_pedido)
+                    strAviso = 'Erro ao criar arquivo xml para o pedido ' + str(var_num_pedido)
+                    registro_execucao.erro_execucao(f'Id do pedido: {var_id_pedido}. {strAviso}')
+                    self.banco.registraLog.mensagem(var_id_pedido, strAviso, tipoMsg.inconsistencia)
                     tot_falha = tot_falha + 1
+                    if not tentar_denovo:
+                        t_pedido.updateSituacao(Status.Rejeitado.value)
                     continue
-
-                # OBTEM O NUMERO DA NOTA FISCAL: (nao utilizado)     
-                # tipoDoc = str( t_pedido.lstPedido.get('tipodocumento') )
-                # numSerie = '{serie_nf}{subserie}'.format(serie_nf = t_pedido.lstPedido.get('serie_nf'), subserie = t_pedido.lstPedido.get('subserie'))
-                # strNum_nf = self.banco.ObterProximoNumNotaFiscal(tipoDoc, numSerie, str(t_pedido.lstPedido.id_estabecimento) )
 
                 if int(pedido['status']) == Status.Cancelamento_Fiscal.value:
                     pathdefault = path_Cancelamento
@@ -142,22 +143,26 @@ class EmissaoNota(JobCommand):
                     pathdefault = path_Envio
 
                 registro_execucao.informativo('Iniciando a criacao do arquivo xml...')
-                arquivo = montar_LayoutCalculaImpostos(t_pedido, pathdefault, strNum_nf)
 
-                if (arquivo != ''):
+                try:
+                    montar_LayoutCalculaImpostos(t_pedido, pathdefault, strNum_nf)
+
                     t_pedido.updatePedidoProcessado( var_id_pedido )
                     strAviso = 'Criado arquivo xml do pedido ' + str(var_num_pedido) 
                     registro_execucao.informativo(f'Id do pedido: {var_id_pedido}. {strAviso}')
                     self.banco.registraLog.mensagem( var_id_pedido, strAviso, tipoMsg.sucesso)
                     total_proc = total_proc  + 1
-                else:
-                    strAviso = 'Erro ao criar arquivo xml para o pedido ' + str(var_num_pedido)
+                except Exception as e:
+                    tentar_denovo = self.iterarTentativa(t_pedido)
+                    strAviso = f'Erro ao criar arquivo xml para o pedido {var_num_pedido}. Erro: {e}' 
                     registro_execucao.erro_execucao(f'Id do pedido: {var_id_pedido}. {strAviso}')
                     self.banco.registraLog.mensagem(var_id_pedido, strAviso, tipoMsg.inconsistencia)
+                    tot_falha = tot_falha + 1
+                    if not tentar_denovo:
+                        t_pedido.updateSituacao(Status.Rejeitado.value)
+                    
 
-                ## registro_execucao.informativo(strAviso)
-
-            ## print("Total Lidos: {0} | Total Processados:{1}, Total Falhas:{2}".format(str(total_reg), str(total_proc), str(tot_falha) ) )
+            registro_execucao.informativo("Total Lidos: {0} | Total Processados:{1}, Total Falhas:{2}".format(str(total_reg), str(total_proc), str(tot_falha) ) )
 
             # Execução do ServiceDocument
             # dirInstalacaoERP = self.banco.dir_instalacao_erp.obterDiretorioInstalacao()
@@ -170,19 +175,16 @@ class EmissaoNota(JobCommand):
             mensagem = "Erro inesperado: {0}".format(str(e))
             registro_execucao.exception_execucao(mensagem)
 
-    def iterarTentativa(self, t_pedido: Tpedido, documento):
+    def iterarTentativa(self, t_pedido: Tpedido):
         # Retorna True se houverem tentativas restantes antes de falhar, False do contrário
-        dataHoraUltimaTentativaPedido = t_pedido.lstPedido['ultima_tentativa']
-        dataHoraUltimaTentativaDocumento = documento.get('datahora_inclusao')
-        dataHoraPrimeiraTentativa = t_pedido.lstPedido['primeira_tentativa']
-        tentativasAdicionais = t_pedido.lstPedido['tentativas_adicionais']
+        dataHoraPrimeiraTentativa = t_pedido.pedido['primeira_tentativa']
+        tentativasAdicionais = t_pedido.pedido['tentativas_adicionais']
         maximoTentativasConfig = int(EnvConfig.instance().maximo_tentativas)
-        formatoDataHora = "%Y-%m-%d %H:%M:%S.%f"
 
         # Quando não houverem tentativas adicionais
         if maximoTentativasConfig == 1:
             if tentativasAdicionais == 0:
-                t_pedido.atualizarTentativa(dataHoraUltimaTentativaDocumento, dataHoraUltimaTentativaDocumento)
+                t_pedido.atualizarTentativa(datetime.now(), datetime.now())
             return False
         
         tentativaAdicionalAtual = tentativasAdicionais + 1
@@ -191,15 +193,13 @@ class EmissaoNota(JobCommand):
             intervalo_tentativas = (24*60) / (maximoTentativasConfig-1)
 
             # Caso seja a primeira retentativa
-            if dataHoraPrimeiraTentativa is None and dataHoraUltimaTentativaPedido is None:
-                dataHoraPrimeiraTentativa = dataHoraUltimaTentativaDocumento
-                dataHoraUltimaTentativaPedido = dataHoraUltimaTentativaDocumento
-                # TODO atualizar primeira e ultimas tentativas neste momento?
+            if dataHoraPrimeiraTentativa is None:
+                dataHoraPrimeiraTentativa = datetime.now()
             
             # Calcula a partir de quando deve ser a próxima tentativa
             proximaTentativa = dataHoraPrimeiraTentativa + timedelta(minutes=tentativaAdicionalAtual*intervalo_tentativas)
             if datetime.now() > proximaTentativa:
-                t_pedido.atualizarTentativa(dataHoraPrimeiraTentativa, dataHoraUltimaTentativaDocumento, tentativaAdicionalAtual)
+                t_pedido.atualizarTentativa(dataHoraPrimeiraTentativa, datetime.now(), tentativaAdicionalAtual)
             return True
 
         return False
@@ -207,30 +207,30 @@ class EmissaoNota(JobCommand):
 
     def validarDados(self, a_pedido: Tpedido):
         b_dados_validos = False 
-        strPedido = str( a_pedido.lstPedido[0]['id_pedido'] )
+        strPedido = str( a_pedido.pedido['id_pedido'] )
 
         strAviso = ''
         if ( a_pedido.lstCliente == None):
-            strAviso = 'Cliente não encontrado para o CNPJ/CPF informado: ' + str(a_pedido.lstPedido[0]['cnpj_cliente'])
-            self.registro_execucao.atencao(strAviso)
+            strAviso = 'Cliente não encontrado para o CNPJ/CPF informado: ' + str(a_pedido.pedido['cnpj_cliente'])
+            self.registro_execucao.informativo(strAviso)
             self.banco.registraLog.mensagem( strPedido, strAviso, tipoMsg.inconsistencia)
             return False
 
         if ( a_pedido.lstEndCliente == None):
             strAviso = 'Endereço do Cliente não retornou registros!'
-            self.registro_execucao.atencao(strAviso)
+            self.registro_execucao.informativo(strAviso)
             self.banco.registraLog.mensagem( strPedido, strAviso, tipoMsg.inconsistencia)
             return False 
 
         if ( a_pedido.lstFormaPagamento == None):
             strAviso = 'Forma de Pagamento não retornou registros!'
-            self.registro_execucao.atencao(strAviso)
+            self.registro_execucao.informativo(strAviso)
             self.banco.registraLog.mensagem( strPedido, strAviso, tipoMsg.inconsistencia)
             return False       
         
         if ( a_pedido.lstEstabelecimento == None):
-            strAviso = 'Estabelecimento não encontrado para CNPJ Informado: ' + str(a_pedido.lstPedido[0]['cnpj_estabelecimento'])
-            self.registro_execucao.atencao(strAviso)
+            strAviso = 'Estabelecimento não encontrado para CNPJ Informado: ' + str(a_pedido.pedido['cnpj_estabelecimento'])
+            self.registro_execucao.informativo(strAviso)
             self.banco.registraLog.mensagem( strPedido, strAviso, tipoMsg.inconsistencia)
             return False
         else:
@@ -239,25 +239,25 @@ class EmissaoNota(JobCommand):
         strmsg = 'Valor inválido informado para o campo {} . [ {} ] = {}'
         strAviso = ''
         erroLista = []    
-        var_loc_estoq= str( a_pedido.lstPedido[0]['localestoque'] )
+        var_loc_estoq= str( a_pedido.pedido['localestoque'] )
       
         try:
             self.registro_execucao.informativo('Validando dados do pedido.')
             # validar dados do pedido:
-            if a_pedido.lstPedido[0]['id_operacao'] == '':
+            if a_pedido.pedido['id_operacao'] == '':
                strAviso = strmsg.format('Código da Operação', 'COD_OPERACAO', 'vazio' )
                erroLista.append( strAviso )
 
-            if not a_pedido.lstPedido[0]['tp_operacao'] in [item.value for item in Tp_Operacao]:
-               strAviso = strmsg.format('Tipo da Operação', 'TP_OPERACAO', a_pedido.lstPedido[0]['tp_operacao'] )
+            if not a_pedido.pedido['tp_operacao'] in [item.value for item in Tp_Operacao]:
+               strAviso = strmsg.format('Tipo da Operação', 'TP_OPERACAO', a_pedido.pedido['tp_operacao'] )
                erroLista.append( strAviso )
                         
-            if (a_pedido.lstPedido[0]['serie_nf'] == '' or None):
+            if (a_pedido.pedido['serie_nf'] == '' or None):
                 strAviso = strmsg.format('Série da Nota Fiscal', 'SERIE_NF', 'vazio' )
                 erroLista.append( strAviso )
                       
-            if a_pedido.lstPedido[0]['tipodocumento'] != 55:
-                strAviso = strmsg.format('Tipo de documento', 'TIPODOCUMENTO', a_pedido.lstPedido[0]['tipodocumento'] )
+            if a_pedido.pedido['tipodocumento'] != 55:
+                strAviso = strmsg.format('Tipo de documento', 'TIPODOCUMENTO', a_pedido.pedido['tipodocumento'] )
                 erroLista.append( strAviso )
             
             if ( var_loc_estoq != '') and not( var_loc_estoq == None):
@@ -268,7 +268,7 @@ class EmissaoNota(JobCommand):
                 strAviso = strmsg.format('Local de Estoque', 'LOCALESTOQUE', 'vazio' )
                 erroLista.append( strAviso )
 
-            date_time_str = str(a_pedido.lstPedido[0]['dt_emissao'])
+            date_time_str = str(a_pedido.pedido['dt_emissao'])
             if (date_time_str != '') and (date_time_str != None):
                 date_dt = datetime.strptime(date_time_str, '%Y-%m-%d')
                 if date_dt.date() > date.today():
@@ -279,8 +279,8 @@ class EmissaoNota(JobCommand):
 
             # validar dados do cliente:
             self.registro_execucao.informativo('Validando dados do cliente.')
-            if ( a_pedido.lstCliente[0]['id_cliente'] == '' or None):
-                erroLista.append('Cliente não encontrado com o CNPJ/CPF informado: ' + str(a_pedido.lstPedido[0]['cnpj_cliente']) )
+            if ( a_pedido.lstCliente is None or len(a_pedido.lstCliente) == 0):
+                erroLista.append('Cliente não encontrado com o CNPJ/CPF informado: ' + str(a_pedido.pedido['cnpj_cliente']) )
 
             self.registro_execucao.informativo('Validando dados do produto.')
             # validar dados do produto (itens do pedido):
@@ -329,7 +329,7 @@ class EmissaoNota(JobCommand):
     def listarErros(self, id, lista, a_tipo: tipoMsg):
         for err in lista:
             self.banco.registraLog.mensagem( id, err, a_tipo)
-            self.registro_execucao.erro(f'Id do pedido:{id}. {err}')
+            self.registro_execucao.erro_execucao(f'Id do pedido:{id}. {err}')
 
     def novoStatus(self, status_Doc:int, statusAtualPedido:int):
         
