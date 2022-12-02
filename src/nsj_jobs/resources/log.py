@@ -216,4 +216,4 @@ class Log:
         self.erro(mensagem)
 
     def exception_execucao(self, mensagem):
-        self.excecao(mensagem, True)
+        self.excecao(mensagem)

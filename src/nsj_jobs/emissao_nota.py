@@ -124,10 +124,10 @@ class EmissaoNota(JobCommand):
             total_reg  = len(pedidos)
             total_proc = 0
             tot_falha  = 0
-            
+            print(pedidos)
             registro_execucao.informativo('Criando os arquivos XML.')
             for pedido in pedidos:
-
+                print(pedido)
                 if pedido['status'] == Status.Reemitir.value:
                     t_pedido = Tpedido(db)
                     t_pedido.pedido = pedido
