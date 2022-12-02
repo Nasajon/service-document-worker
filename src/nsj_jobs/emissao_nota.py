@@ -104,7 +104,7 @@ class EmissaoNota(JobCommand):
                                 strAviso = f"Erro ao tratar o pedido {var_identificador} no ServiceDocument. {documento.get('mensagem_retorno')}"
                                 registro_execucao.erro_execucao(strAviso)
                                 self.banco.registraLog.mensagem(var_id_pedido, strAviso, tipoMsg.serviceDocument)
-                                
+
                                 # Verifica se deve tentar de novo. Se não puder tentar de novo, rejeita
                                 if not self.iterarTentativaParaServiceDocument(t_pedido):
                                     t_pedido.updateSituacao(Status.Rejeitado.value)    
@@ -118,7 +118,8 @@ class EmissaoNota(JobCommand):
             # obtem os pedidos que ainda nao foram processados: (processado = False , emitir = True)
      
             registro_execucao.informativo('Obtendo os pedidos que ainda não foram processados.')
-            pedidos = self.banco.t_pedidos.obterPedidos(situacoes, False)
+            pedidos = self.banco.t_pedidos.obterPedidos([Status.Aberto.value], False)
+            pedidos.append(self.banco.t_pedidos.obterPedidos([Status.Reemitir.value, Status.Cancelamento_Fiscal.value], False))
 
             total_reg  = len(pedidos)
             total_proc = 0
