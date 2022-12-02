@@ -132,7 +132,7 @@ class Tpedidos:
     def __init__(self, conexao_banco: DBAdapter = None):
         self.conexao = conexao_banco
 
-    def obterPedidos(self, situacao: list, processado: bool):
+    def obterPedidos(self, situacao: list, processado: bool, limit:bool):
         strSituacao = IsEmpty
         if situacao.count == 1:
             strSituacao = situacao[0]
@@ -160,8 +160,7 @@ class Tpedidos:
                 WHERE PED.STATUS in (""" + strSituacao + """) and
                 PED.Processado = %s
                 AND PED.EMITIR = TRUE
-                ORDER BY PED.dt_emissao
-                LIMIT 10"""
+                ORDER BY PED.dt_emissao""" + (" LIMIT 10" if limit else '')
         
         sql = sql.format(schema)
         return self.conexao.execute_query_to_dict(sql, [processado])

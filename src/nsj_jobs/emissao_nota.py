@@ -118,8 +118,8 @@ class EmissaoNota(JobCommand):
             # obtem os pedidos que ainda nao foram processados: (processado = False , emitir = True)
      
             registro_execucao.informativo('Obtendo os pedidos que ainda não foram processados.')
-            pedidos = self.banco.t_pedidos.obterPedidos([Status.Aberto], False)
-            pedidos.append(self.banco.t_pedidos.obterPedidos([Status.Reemitir, Status.Cancelamento_Fiscal], False))
+            pedidos = self.banco.t_pedidos.obterPedidos([Status.Aberto], False, True)
+            pedidos.append(self.banco.t_pedidos.obterPedidos([Status.Reemitir, Status.Cancelamento_Fiscal], False, False))
 
             total_reg  = len(pedidos)
             total_proc = 0
