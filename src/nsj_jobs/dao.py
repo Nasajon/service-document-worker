@@ -160,7 +160,8 @@ class Tpedidos:
                 WHERE PED.STATUS in (""" + strSituacao + """) and
                 PED.Processado = %s
                 AND PED.EMITIR = TRUE
-                ORDER BY PED.dt_emissao"""
+                ORDER BY PED.dt_emissao
+                LIMIT 10"""
         
         sql = sql.format(schema)
         return self.conexao.execute_query_to_dict(sql, [processado])
