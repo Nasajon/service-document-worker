@@ -6,6 +6,7 @@ USER ContainerAdministrator
 RUN curl https://www.python.org/ftp/python/3.10.4/python-3.10.4-amd64.exe -o python_installer.exe
 RUN python_installer.exe /passive InstallAllUsers=1 PrependPath=1 Include_test=0
 RUN python -m pip install psycopg2
+RUN python -m pip install pytz
 RUN mkdir C:\notas
 RUN mkdir C:\notas\output
 
