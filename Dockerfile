@@ -8,7 +8,7 @@ RUN python -m pip install psycopg2
 RUN python -m pip install pytz
 RUN mkdir C:\notas
 RUN mkdir C:\notas\output
-RUN tzutil /l "E. South America Standard Time"
+RUN tzutil /s "E. South America Standard Time"
 
 ARG dir_instalacao_nasajon_src="erp-instalador/bin/integratto"
 ARG dir_instalacao_nasajon_target="C:/Nasajon Sistemas/Integratto2"
