@@ -292,13 +292,8 @@ class EmissaoNota(JobCommand):
                 erroLista.append( strAviso )
 
             date_time_str = str(a_pedido.pedido['dt_emissao'])
-            if (date_time_str != '') and (date_time_str != None):
-                date_dt = datetime.strptime(date_time_str, '%Y-%m-%d')
-                if date_dt.date() > date.today():
-                    erroLista.append('Data de emissão [DT_EMISSAO] maior que a data atual.')
-            else:
-                strAviso = strmsg.format('Data emissão', 'DT_EMISSAO', date_time_str )
-                erroLista.append( strAviso )
+            if (date_time_str == '') and (date_time_str == None):
+                erroLista.append( 'Data de Emissão não preenchida' )
 
             # validar dados do cliente:
             self.registro_execucao.informativo('Validando dados do cliente.')
