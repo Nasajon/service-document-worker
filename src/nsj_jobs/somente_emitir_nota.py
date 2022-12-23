@@ -1,5 +1,5 @@
-from src.nsj_jobs.resources.job_command import JobCommand
-from src.nsj_jobs.service_document_cmd import ServiceDocumentCMD
+from nsj_jobs.resources.job_command import JobCommand
+from nsj_jobs.service_document_cmd import ServiceDocumentCMD
 from nsj_jobs.dao import DAO
 
 class EmissaoNota(JobCommand):
