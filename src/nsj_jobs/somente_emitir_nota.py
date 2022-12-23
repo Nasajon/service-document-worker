@@ -13,8 +13,8 @@ class EmissaoNota(JobCommand):
         self.registro_execucao = registro_execucao
         self.banco = DAO(db)
         registro_execucao.informativo('Iniciando processo de emissão de nota fiscal.')
-        dirInstalacaoERP = self.banco.dir_instalacao_erp.obterDiretorioInstalacao()
-        # dirInstalacaoERP = "C:\\Nasajon Sistemas\\Integratto2\\"
+        # dirInstalacaoERP = self.banco.dir_instalacao_erp.obterDiretorioInstalacao()
+        dirInstalacaoERP = "C:\\Nasajon Sistemas\\Integratto2\\"
         serviceDocument = ServiceDocumentCMD(dirInstalacaoERP, entrada, 'SOMENTE_EMISSAO')
         serviceDocument.executar()
         registro_execucao.informativo('Processo de emissão finalizado.')
