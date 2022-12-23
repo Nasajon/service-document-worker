@@ -11,7 +11,7 @@ def call_emission_routine():
 
 
 def call_import_routine():
-    delay = os.getenv("frequencia_job", 300) # 5 minutos por padrão
+    delay = os.getenv("frequencia_job", 120) # 5 minutos por padrão
 
     while True:
         os.system("python -m nsj_jobs.somente_importar_nota")
