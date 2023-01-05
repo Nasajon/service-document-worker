@@ -143,7 +143,7 @@ class Tpedidos:
     def __init__(self, conexao_banco: DBAdapter = None):
         self.conexao = conexao_banco
 
-    def obterPedidos(self, situacao: list, processado: bool):
+    def obterPedidos(self, situacao: list, processado: bool, limit:bool):
         strSituacao = IsEmpty
         if situacao.count == 1:
             strSituacao = situacao[0]
@@ -171,8 +171,8 @@ class Tpedidos:
                 WHERE PED.STATUS in (""" + strSituacao + """) and
                 PED.Processado = %s
                 AND PED.EMITIR = TRUE
-                ORDER BY PED.dt_emissao"""
-
+                ORDER BY PED.dt_emissao""" + (" LIMIT 10" if limit else '')
+        
         sql = sql.format(schema)
         return self.conexao.execute_query_to_dict(sql, [processado])
 
@@ -313,9 +313,9 @@ class Tpedido:
             self.pedido = pedidos[0]
 
     def obterDadosPedido(self, idpedido: str):
-
+        
         self.lstEstabelecimento = self.obterEstabelecimento(idpedido)
-        self.lstCliente = self.obterCliente(idpedido)
+        self.lstCliente         = self.obterCliente(idpedido)
 
         if (len(self.lstCliente) != 0):
             var_id_cliente = str(self.lstCliente[0]['id_cliente'])

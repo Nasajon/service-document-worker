@@ -99,13 +99,17 @@ class EmissaoNota(JobCommand):
                                 strAviso = f"Erro ao tratar o pedido {var_identificador} no ServiceDocument. {documento.get('mensagem_retorno')}"
                                 registro_execucao.erro_execucao(strAviso)
                                 self.banco.registraLog.mensagem(var_id_pedido, strAviso, tipoMsg.serviceDocument, documento.get('documento') )
+                                break
                             else:
                                 strAviso = f"Erro ao tratar o pedido {var_identificador} no ServiceDocument. {documento.get('mensagem_retorno')}"
                                 registro_execucao.erro_execucao(strAviso)
                                 self.banco.registraLog.mensagem(var_id_pedido, strAviso, tipoMsg.serviceDocument)
+
                                 # Verifica se deve tentar de novo. Se não puder tentar de novo, rejeita
                                 if not self.iterarTentativaParaServiceDocument(t_pedido):
-                                    t_pedido.updateSituacao(Status.Rejeitado.value)
+                                    t_pedido.updateSituacao(Status.Rejeitado.value)    
+
+                                break
                     
                 # fim loop documento enviados
             # fim loop pedidos.
@@ -114,7 +118,8 @@ class EmissaoNota(JobCommand):
             # obtem os pedidos que ainda nao foram processados: (processado = False , emitir = True)
      
             registro_execucao.informativo('Obtendo os pedidos que ainda não foram processados.')
-            pedidos = self.banco.t_pedidos.obterPedidos(situacoes, False)
+            pedidos = self.banco.t_pedidos.obterPedidos([Status.Aberto], False, True)
+            pedidos.extend(self.banco.t_pedidos.obterPedidos([Status.Reemitir, Status.Cancelamento_Fiscal], False, False))
 
             total_reg  = len(pedidos)
             total_proc = 0
@@ -186,8 +191,8 @@ class EmissaoNota(JobCommand):
             registro_execucao.informativo("Total Lidos: {0} | Total Processados:{1}, Total Falhas:{2}".format(str(total_reg), str(total_proc), str(tot_falha) ) )
 
             # Execução do ServiceDocument
-            dirInstalacaoERP = self.banco.dir_instalacao_erp.obterDiretorioInstalacao()
-            # dirInstalacaoERP = "C:\\Nasajon Sistemas\\Integratto2\\"
+            # dirInstalacaoERP = self.banco.dir_instalacao_erp.obterDiretorioInstalacao()
+            dirInstalacaoERP = "C:\\Nasajon Sistemas\\Integratto2\\"
             serviceDocument = ServiceDocumentCMD(dirInstalacaoERP, entrada)
             serviceDocument.executar()
 
@@ -287,13 +292,8 @@ class EmissaoNota(JobCommand):
                 erroLista.append( strAviso )
 
             date_time_str = str(a_pedido.pedido['dt_emissao'])
-            if (date_time_str != '') and (date_time_str != None):
-                date_dt = datetime.strptime(date_time_str, '%Y-%m-%d')
-                if date_dt.date() > date.today():
-                    erroLista.append('Data de emissão [DT_EMISSAO] maior que a data atual.')
-            else:
-                strAviso = strmsg.format('Data emissão', 'DT_EMISSAO', date_time_str )
-                erroLista.append( strAviso )
+            if (date_time_str == '') and (date_time_str == None):
+                erroLista.append( 'Data de Emissão não preenchida' )
 
             # validar dados do cliente:
             self.registro_execucao.informativo('Validando dados do cliente.')
@@ -311,9 +311,9 @@ class EmissaoNota(JobCommand):
                     strAviso = strmsg.format('Código do Produto', 'COD_PRODUTO', produto.get('cod_produto') )
                     erroLista.append( strAviso )
                 
-                if not self.banco.cfopValido(produto.get('cfop')):
-                    strAviso = strmsg.format('CFOP', 'CFOP', produto.get('cfop') )
-                    erroLista.append( strAviso )
+                # if not self.banco.cfopValido(produto.get('cfop')):
+                #     strAviso = strmsg.format('CFOP', 'CFOP', produto.get('cfop') )
+                #     erroLista.append( strAviso )
 
                 var_loc_estoq = str( produto.get('localestoque') )   
 

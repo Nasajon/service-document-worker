@@ -2,13 +2,13 @@
 # !/usr/bin/env python
 # -*- coding: cp1252 -*-
 
+from pytz import timezone
 from nsj_jobs.dao import Tpedido
 from datetime import datetime
 from nsj_jobs.resources.dom.minidom import Document
 
 #from xml.etree.ElementTree import Element,  SubElement,  Comment,  tostring
 # import urllib
-
 
 def montar_LayoutCalculaImpostos(t_Pedido: Tpedido, pathFile, num_notaFiscal):
 
@@ -27,6 +27,7 @@ def montar_LayoutCalculaImpostos(t_Pedido: Tpedido, pathFile, num_notaFiscal):
     NSJDOC.setAttribute('xmlns', 'http://www.nasajon.com.br/docengine')
     doc.appendChild(NSJDOC)
     base = createNode('NFE', NSJDOC, doc)
+    data_atual = datetime.now(timezone('America/Sao_Paulo')).date()
 
     # NFE
     createNodeChild(
@@ -43,8 +44,8 @@ def montar_LayoutCalculaImpostos(t_Pedido: Tpedido, pathFile, num_notaFiscal):
         'SERIE', t_Pedido.pedido['serie_nf'],  doc, nivel_1)
     createNodeChild(
         'SUBSERIE', t_Pedido.pedido['subserie'], doc, nivel_1)
-    createNodeChild('DATAEMISSAO', t_Pedido.pedido['datasaidaentrada'] if t_Pedido.pedido['datasaidaentrada'] >= datetime.now().date() else datetime.now().date(), doc, nivel_1)
-    createNodeChild('DATASAIDAENTRADA', t_Pedido.pedido['datasaidaentrada'] if t_Pedido.pedido['datasaidaentrada'] >= datetime.now().date() else datetime.now().date(), doc, nivel_1)
+    createNodeChild('DATAEMISSAO', t_Pedido.pedido['datasaidaentrada'] if t_Pedido.pedido['datasaidaentrada'] >= data_atual else data_atual, doc, nivel_1)
+    createNodeChild('DATASAIDAENTRADA', t_Pedido.pedido['datasaidaentrada'] if t_Pedido.pedido['datasaidaentrada'] >= data_atual else data_atual, doc, nivel_1)
     createNodeChild('DATALANCAMENTO',
                     t_Pedido.pedido['datalancamento'], doc, nivel_1)
     createNodeChild(
@@ -103,27 +104,6 @@ def montar_LayoutCalculaImpostos(t_Pedido: Tpedido, pathFile, num_notaFiscal):
     createNodeChild(
         'REFERENCIA', t_Pedido.lstEndCliente[0]['referencia'], doc, nivel_2)
 
-    # ENDERECO DE ENTREGA
-    nivel_1 = createNode('ENTREGA', base, doc)
-    createNodeChild(
-        'TIPOLOGRADOURO', t_Pedido.endEntrega['tipo_logradouro'], doc, nivel_1)
-    createNodeChild(
-        'LOGRADOURO', t_Pedido.endEntrega['logradouro'], doc, nivel_1)
-    createNodeChild(
-        'NUMERO', t_Pedido.endEntrega['numero'], doc, nivel_1)
-    createNodeChild(
-        'COMPLEMENTO', t_Pedido.endEntrega['complemento'], doc, nivel_1)
-    createNodeChild('CEP', t_Pedido.endEntrega['cep'], doc, nivel_1)
-    createNodeChild(
-        'BAIRRO', t_Pedido.endEntrega['bairro'], doc, nivel_1)
-    createNodeChild(
-        'CODIGOMUNICIPIO', t_Pedido.endEntrega['codigo_municipio'], doc, nivel_1)
-    createNodeChild(
-        'MUNICIPIO', t_Pedido.endEntrega['nome_municipio'], doc, nivel_1)
-    createNodeChild('UF', t_Pedido.endEntrega['uf'], doc, nivel_1)
-    createNodeChild(
-        'PAIS', t_Pedido.endEntrega['codigo_pais'], doc, nivel_1)
-
     # PRODUTOS
     valor_total_nota = 0
     for produto in t_Pedido.lstProdutos:
@@ -174,7 +154,7 @@ def montar_LayoutCalculaImpostos(t_Pedido: Tpedido, pathFile, num_notaFiscal):
         createNodeChild('TIPOFORMAPAGAMENTO', pagamento.get(
             'tipoformapagamento'), doc, nivel_2)
         createNodeChild('NUMERO', strNumParc, doc, nivel_2)
-        createNodeChild('VENCIMENTO', pagamento.get('dt_vencimento') if pagamento.get('dt_vencimento') >= datetime.now().date() else datetime.now().date(), doc, nivel_2)
+        createNodeChild('VENCIMENTO', pagamento.get('dt_vencimento') if pagamento.get('dt_vencimento') >= data_atual else data_atual, doc, nivel_2)
         createNodeChild('VALOR', pagamento.get(
             'valor_parcela'), doc, nivel_2)
         parc_num += 1
@@ -209,3 +189,4 @@ def formataNumZeros(quant_zeros: int, numero: int) -> str:
     sfmt = '%0{}d'.format(quant_zeros)
     num_zeros = sfmt % (numero,)
     return num_zeros
+
