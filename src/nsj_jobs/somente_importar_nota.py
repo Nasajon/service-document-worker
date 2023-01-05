@@ -191,8 +191,11 @@ class EmissaoNota(JobCommand):
             registro_execucao.informativo("Total Lidos: {0} | Total Processados:{1}, Total Falhas:{2}".format(str(total_reg), str(total_proc), str(tot_falha) ) )
 
             # Execução do ServiceDocument
-            # dirInstalacaoERP = self.banco.dir_instalacao_erp.obterDiretorioInstalacao()
-            dirInstalacaoERP = "C:\\Nasajon Sistemas\\Integratto2\\"
+            if entrada['env'] == 'docker':
+                dirInstalacaoERP = "C:\\Nasajon Sistemas\\Integratto2\\"
+            elif entrada['env'] == 'jobmanager':
+                dirInstalacaoERP = self.banco.dir_instalacao_erp.obterDiretorioInstalacao()
+                
             serviceDocument = ServiceDocumentCMD(dirInstalacaoERP, entrada, 'SOMENTE_IMPORTACAO')
             serviceDocument.executar()
 
