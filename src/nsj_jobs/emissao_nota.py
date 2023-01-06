@@ -313,10 +313,6 @@ class EmissaoNota(JobCommand):
                 if produto.get('prod_nao_existe') == 1:
                     strAviso = strmsg.format('Código do Produto', 'COD_PRODUTO', produto.get('cod_produto') )
                     erroLista.append( strAviso )
-                
-                # if not self.banco.cfopValido(produto.get('cfop')):
-                #     strAviso = strmsg.format('CFOP', 'CFOP', produto.get('cfop') )
-                #     erroLista.append( strAviso )
 
                 var_loc_estoq = str( produto.get('localestoque') )   
 
