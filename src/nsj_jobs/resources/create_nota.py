@@ -6,7 +6,7 @@ from pytz import timezone
 from nsj_jobs.dao import Tpedido
 from datetime import datetime
 from nsj_jobs.resources.dom.minidom import Document
-from src.nsj_jobs.resources.envconfig import EnvConfig
+from nsj_jobs.resources.envconfig import EnvConfig
 
 #from xml.etree.ElementTree import Element,  SubElement,  Comment,  tostring
 # import urllib
