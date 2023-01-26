@@ -6,6 +6,7 @@ from pytz import timezone
 from nsj_jobs.dao import Tpedido
 from datetime import datetime
 from nsj_jobs.resources.dom.minidom import Document
+from src.nsj_jobs.resources.envconfig import EnvConfig
 
 #from xml.etree.ElementTree import Element,  SubElement,  Comment,  tostring
 # import urllib
@@ -37,6 +38,7 @@ def montar_LayoutCalculaImpostos(t_Pedido: Tpedido, pathFile, num_notaFiscal):
     createNodeChild(
         'ESTABELECIMENTO', t_Pedido.lstEstabelecimento[0]['estabelecimento'], doc, base)
     createNodeChild('VERSAO', '4.00', doc, base)
+    createNodeChild('SOMENTE_IMPORTACAO', 1 if EnvConfig.instance().operacao_somente_importacao == t_Pedido.pedido["operacao"] else 0, doc, base)
 
     # DADOSGERAIS
     nivel_1 = createNode('DADOSGERAIS', base, doc)
