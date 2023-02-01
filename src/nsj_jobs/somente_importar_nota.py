@@ -270,24 +270,24 @@ class EmissaoNota(JobCommand):
         try:
             self.registro_execucao.informativo('Validando dados do pedido.')
             # validar dados do pedido:
-            if a_pedido.pedido['id_operacao'] == '':
+            if a_pedido.pedido["tipo_nota"] in ['NFE'] and a_pedido.pedido['id_operacao'] == '':
                strAviso = strmsg.format('Código da Operação', 'COD_OPERACAO', 'vazio' )
                erroLista.append( strAviso )
 
-            if not a_pedido.pedido['tp_operacao'] in [item.value for item in Tp_Operacao]:
+            if a_pedido.pedido["tipo_nota"] in ['NFE'] and not a_pedido.pedido['tp_operacao'] in [item.value for item in Tp_Operacao]:
                strAviso = strmsg.format('Tipo da Operação', 'TP_OPERACAO', a_pedido.pedido['tp_operacao'] )
                erroLista.append( strAviso )
                         
-            if (a_pedido.pedido['serie_nf'] == '' or None):
+            if (a_pedido.pedido['serie_nf'] in ['', None]):
                 strAviso = strmsg.format('Série da Nota Fiscal', 'SERIE_NF', 'vazio' )
                 erroLista.append( strAviso )
                       
-            if a_pedido.pedido['tipodocumento'] != 55:
+            if a_pedido.pedido["tipo_nota"] in ['NFE'] and a_pedido.pedido['tipodocumento'] != 55:
                 strAviso = strmsg.format('Tipo de documento', 'TIPODOCUMENTO', a_pedido.pedido['tipodocumento'] )
                 erroLista.append( strAviso )
             
             if ( var_loc_estoq != '') and not( var_loc_estoq == None):
-                if not self.banco.localEstoqueValido( var_loc_estoq, var_id_Estab ):
+                if a_pedido.pedido["tipo_nota"] in ['NFE'] and not self.banco.localEstoqueValido( var_loc_estoq, var_id_Estab ):
                     strAviso = strmsg.format('Local de Estoque', 'LOCALESTOQUE', var_loc_estoq )
                     erroLista.append( strAviso )
             else:
@@ -305,27 +305,28 @@ class EmissaoNota(JobCommand):
 
             self.registro_execucao.informativo('Validando dados do produto.')
             # validar dados do produto (itens do pedido):
-            for produto in a_pedido.lstProdutos:
-                
-                if ((produto.get('sem_saldo') == 1) and (produto.get('mensagem_erro') != '')):
-                    erroLista.append(produto.get('mensagem_erro'))
+            if a_pedido.pedido["tipo_nota"] in ['NFE']:
+                for produto in a_pedido.lstProdutos:
+                    
+                    if ((produto.get('sem_saldo') == 1) and (produto.get('mensagem_erro') != '')):
+                        erroLista.append(produto.get('mensagem_erro'))
 
-                if produto.get('prod_nao_existe') == 1:
-                    strAviso = strmsg.format('Código do Produto', 'COD_PRODUTO', produto.get('cod_produto') )
-                    erroLista.append( strAviso )
-
-                var_loc_estoq = str( produto.get('localestoque') )   
-
-                if (var_loc_estoq != '') and (var_loc_estoq != None):
-                    if not self.banco.localEstoqueValido(var_loc_estoq, var_id_Estab ):
-                        erroLista.append('Valor inválido informado para o campo [LOCALESTOQUE] no item.')
-                else:
-                    erroLista.append('Valor não foi informado para o campo [LOCALESTOQUE] no item.')
-
-                if (produto.get('documentoreferenciado_chave') != None) and (produto.get('documentoreferenciado_chave') !='') :
-                    if ( len(produto.get('documentoreferenciado_chave') ) < 44 ):
-                        strAviso = strmsg.format('Documento referenciado', 'DOCUMENTOREFERENCIADO_CHAVE', produto.get('documentoreferenciado_chave') )
+                    if produto.get('prod_nao_existe') == 1:
+                        strAviso = strmsg.format('Código do Produto', 'COD_PRODUTO', produto.get('cod_produto') )
                         erroLista.append( strAviso )
+
+                    var_loc_estoq = str( produto.get('localestoque') )   
+
+                    if (var_loc_estoq != '') and (var_loc_estoq != None):
+                        if not self.banco.localEstoqueValido(var_loc_estoq, var_id_Estab ):
+                            erroLista.append('Valor inválido informado para o campo [LOCALESTOQUE] no item.')
+                    else:
+                        erroLista.append('Valor não foi informado para o campo [LOCALESTOQUE] no item.')
+
+                    if (produto.get('documentoreferenciado_chave') != None) and (produto.get('documentoreferenciado_chave') !='') :
+                        if ( len(produto.get('documentoreferenciado_chave') ) < 44 ):
+                            strAviso = strmsg.format('Documento referenciado', 'DOCUMENTOREFERENCIADO_CHAVE', produto.get('documentoreferenciado_chave') )
+                            erroLista.append( strAviso )
                    
             for pagamento in a_pedido.lstFormaPagamento:
                 if (pagamento.get('tipoformapagamento') == None) or (pagamento.get('tipoformapagamento') == ''):

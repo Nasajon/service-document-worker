@@ -7,6 +7,7 @@
   dt_vencimento date NOT NULL,
   lastupdate timestamp without time zone,
   tenant bigint,
+  numero int,
   CONSTRAINT formapagamento_id_formapagamento_pk PRIMARY KEY (id_formapagamento),
   CONSTRAINT formapagamento_id_pedido_fk FOREIGN KEY (id_pedido)
       REFERENCES servicedocument.pedidos (id_pedido) MATCH SIMPLE

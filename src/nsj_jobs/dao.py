@@ -1,6 +1,8 @@
 # !/usr/bin/env python
 # -*- coding: cp1252 -*-
 
+import copy
+from decimal import Decimal
 from nsj_jobs.resources.db_adapter import DBAdapter
 from datetime import date
 from datetime import datetime
@@ -209,7 +211,9 @@ class Tpedido:
         self.lstCliente = None
         self.lstEndCliente = None
         self.endEntrega = None
+        self.endPrestacao = None
         self.lstProdutos = None
+        self.lstServicos = None
         self.lstFormaPagamento = None
 
         self.camposAtualizar = {
@@ -284,7 +288,7 @@ class Tpedido:
                 upper(COD_OPERACAO) AS OPERACAO,
                 DT_EMISSAO,
                 DT_EMISSAO 	AS DATASAIDAENTRADA,
-                DT_EMISSAO	AS DATALANCAMENTO,
+                COALESCE(DATA_LANCAMENTO, DT_EMISSAO)	AS DATALANCAMENTO,
                 NUM_PEDIDO,
                 NUM_EXTERNO,
                 VALOR_PEDIDO,
@@ -297,11 +301,13 @@ class Tpedido:
                 TIPODOCUMENTO,
                 '000' AS FORMAPAGAMENTO,
                 SERIE_NF,
-                '00' AS SUBSERIE,
+                COALESCE(SUBSERIE_NF, '00') AS SUBSERIE,
+                MUNICIPIO_GERADOR,
                 LOCALESTOQUE,
                 CFOP,
                 TENTATIVAS_ADICIONAIS, 
-                PRIMEIRA_TENTATIVA                                       
+                PRIMEIRA_TENTATIVA,
+                TIPO_NOTA
                 FROM {}.PEDIDOS PED WHERE PED.id_pedido = %s"""
 
         sql = sql.format(schema)
@@ -311,6 +317,9 @@ class Tpedido:
         else:
             self.obterDadosPedido(id_pedido)
             self.pedido = pedidos[0]
+            if self.pedido.get('tipo_nota') == 'NFSE':
+                self.ajustarFormaPagamentoNFSE()
+
 
     def obterDadosPedido(self, idpedido: str):
         
@@ -322,8 +331,30 @@ class Tpedido:
             self.lstEndCliente = self.obterEnderecoCliente(var_id_cliente)
         
         self.endEntrega = self.obterEnderecoEntrega(idpedido)
+        self.endPrestacao = self.obterEnderecoPrestacao(idpedido)
         self.lstProdutos = self.obterProdutos(idpedido)
+        self.lstServicos = self.obterServicos(idpedido)
         self.lstFormaPagamento = self.obterFormasPagamentos(idpedido)
+    
+    def ajustarFormaPagamentoNFSE(self):
+        pagamentos = copy.deepcopy(self.lstFormaPagamento)
+        novaLista = {}
+        for pagamento in pagamentos:
+            if not pagamento.get('tipoformapagamento') in novaLista.keys():
+                novaLista[pagamento.get('tipoformapagamento')] = {
+                    "tipoformapagamento": pagamento.get('tipoformapagamento'),
+                    "parcelas": [],
+                    "valor_total": Decimal('00')
+                    }
+            novaLista[pagamento.get('tipoformapagamento')]["parcelas"].append({
+                "numero": pagamento.get('numero'),
+                "vencimento": pagamento.get('dt_vencimento'),
+                "valor": pagamento.get('valor_parcela')
+            })
+            novaLista[pagamento.get('tipoformapagamento')]["valor_total"] += pagamento.get('valor_parcela')
+        
+        self.lstFormaPagamento = [novaLista[i] for i in novaLista.keys()]
+
 
     def updateSituacao(self, status_value: int):
         idpedido = self.pedido['id_pedido']
@@ -461,6 +492,24 @@ class Tpedido:
                                                                  id_pedido])
 
         return lstPedidos + lstPedidosGenericos
+    
+    def obterServicos(self, id_pedido):
+        if (id_pedido == IsEmpty or id_pedido is None):
+            return None
+
+        sql = """SELECT
+                cod_produto as codigo,
+                quantidade,
+                valor_unitario,
+                valor_desconto
+                FROM {}.ITENSPEDIDOS ITE
+                WHERE ITE.ID_PEDIDO = %s
+                ORDER BY ITE.COD_PRODUTO"""
+
+        sql = sql.format(schema)
+        lstServicos = self.conexao.execute_query_to_dict(sql, [id_pedido])
+
+        return lstServicos
 
     def obterEstabelecimento(self, id_pedido):
         sql = """SELECT 
@@ -529,6 +578,35 @@ class Tpedido:
         else:
             return qry
 
+    def obterEnderecoPrestacao(self, id_pedido):
+        if (id_pedido == IsEmpty or None):
+            return None
+
+        sql = """SELECT 
+                tipo_logradouro,
+                logradouro,
+                numero,
+                complemento,
+                cep,
+                bairro,
+                codigo_municipio,
+                nome_municipio,
+                codigo_pais,
+                uf,
+                telefone,
+                referencia,
+                nome_pais
+            FROM servicedocument.enderecos
+            WHERE id_pedido = %s
+            and tipo_endereco = 1
+            LIMIT 1"""
+
+        qry = self.conexao.execute_query_to_dict(sql, [id_pedido])
+        if (len(qry) == 0):
+            return None
+        else:
+            return qry[0]
+
     def obterEnderecoEntrega(self, id_pedido):
         if (id_pedido == IsEmpty or None):
             return None
@@ -546,6 +624,7 @@ class Tpedido:
                 uf
             FROM servicedocument.enderecos
             WHERE id_pedido = %s
+            and tipo_endereco = 0
             LIMIT 1"""
 
         qry = self.conexao.execute_query_to_dict(sql, [id_pedido])
@@ -563,10 +642,11 @@ class Tpedido:
                         LIMIT 1
                 ) AS tipoformapagamento,
                 valor_parcela,
-                dt_vencimento
+                dt_vencimento,
+                numero
                 FROM {}.pagamentos f
                 WHERE f.id_pedido = %s
-                order by dt_vencimento"""
+                order by numero ASC, dt_vencimento"""
 
         sql = sql.format(schema)
         return self.conexao.execute_query_to_dict(sql, [id_pedido])
