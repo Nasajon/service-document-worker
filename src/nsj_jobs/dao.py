@@ -291,7 +291,8 @@ class Tpedido:
                 LOCALESTOQUE,
                 CFOP,
                 TENTATIVAS_ADICIONAIS, 
-                PRIMEIRA_TENTATIVA                                       
+                PRIMEIRA_TENTATIVA,
+                EMITIR_NOTA                                       
                 FROM {}.PEDIDOS PED WHERE PED.id_pedido = %s"""
 
         sql = sql.format(schema)

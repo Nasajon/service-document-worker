@@ -22,7 +22,6 @@ class EnvConfig:
         self.erp_user = os.getenv("erp_user", "MASTER")
         self.erp_password = os.getenv("erp_password", "")
         self.maximo_tentativas = os.getenv("maximo_tentativas", "24")
-        self.operacao_somente_importacao = os.getenv("operacao_somente_importacao", "")
 
     @staticmethod
     def instance():
