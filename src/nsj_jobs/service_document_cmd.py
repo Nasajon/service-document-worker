@@ -26,7 +26,6 @@ class ServiceDocumentCMD():
         
     
     def executar(self):
-        os.path.dirname()
         params = [
             self.exe_service_document,
             self.autoexec,

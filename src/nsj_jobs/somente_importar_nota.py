@@ -314,7 +314,7 @@ class EmissaoNota(JobCommand):
                     strAviso = strmsg.format('Código do Produto', 'COD_PRODUTO', produto.get('cod_produto') )
                     erroLista.append( strAviso )
 
-                var_loc_estoq = str( produto.get('localestoque') )   
+                var_loc_estoq = produto.get('localestoque') 
 
                 if (var_loc_estoq != '') and (var_loc_estoq != None):
                     if not self.banco.localEstoqueValido(var_loc_estoq, var_id_Estab ):

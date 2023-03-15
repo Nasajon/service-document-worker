@@ -2,7 +2,6 @@
 # !/usr/bin/env python
 # -*- coding: cp1252 -*-
 
-from pytz import timezone
 from nsj_jobs.dao import Tpedido
 from datetime import datetime
 from nsj_jobs.resources.dom.minidom import Document
@@ -28,7 +27,6 @@ def montar_LayoutCalculaImpostos(t_Pedido: Tpedido, pathFile, num_notaFiscal):
     NSJDOC.setAttribute('xmlns', 'http://www.nasajon.com.br/docengine')
     doc.appendChild(NSJDOC)
     base = createNode('NFE', NSJDOC, doc)
-    data_atual = datetime.now(timezone('America/Sao_Paulo')).date()
 
     # NFE
     createNodeChild(
@@ -46,8 +44,8 @@ def montar_LayoutCalculaImpostos(t_Pedido: Tpedido, pathFile, num_notaFiscal):
         'SERIE', t_Pedido.pedido['serie_nf'],  doc, nivel_1)
     createNodeChild(
         'SUBSERIE', t_Pedido.pedido['subserie'], doc, nivel_1)
-    createNodeChild('DATAEMISSAO', t_Pedido.pedido['datasaidaentrada'] if t_Pedido.pedido['datasaidaentrada'] >= data_atual else data_atual, doc, nivel_1)
-    createNodeChild('DATASAIDAENTRADA', t_Pedido.pedido['datasaidaentrada'] if t_Pedido.pedido['datasaidaentrada'] >= data_atual else data_atual, doc, nivel_1)
+    createNodeChild('DATAEMISSAO', t_Pedido.pedido['datasaidaentrada'], doc, nivel_1)
+    createNodeChild('DATASAIDAENTRADA', t_Pedido.pedido['datasaidaentrada'], doc, nivel_1)
     createNodeChild('DATALANCAMENTO',
                     t_Pedido.pedido['datalancamento'], doc, nivel_1)
     createNodeChild(
@@ -177,7 +175,7 @@ def montar_LayoutCalculaImpostos(t_Pedido: Tpedido, pathFile, num_notaFiscal):
         createNodeChild('TIPOFORMAPAGAMENTO', pagamento.get(
             'tipoformapagamento'), doc, nivel_2)
         createNodeChild('NUMERO', strNumParc, doc, nivel_2)
-        createNodeChild('VENCIMENTO', pagamento.get('dt_vencimento') if pagamento.get('dt_vencimento') >= data_atual else data_atual, doc, nivel_2)
+        createNodeChild('VENCIMENTO', pagamento.get('dt_vencimento'), doc, nivel_2)
         createNodeChild('VALOR', pagamento.get(
             'valor_parcela'), doc, nivel_2)
         parc_num += 1
