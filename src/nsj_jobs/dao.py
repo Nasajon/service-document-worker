@@ -171,7 +171,7 @@ class Tpedidos:
                 WHERE PED.STATUS in (""" + strSituacao + """) and
                 PED.Processado = %s
                 AND PED.EMITIR = TRUE
-                ORDER BY PED.dt_emissao""" + (" LIMIT 10" if limit else '')
+                ORDER BY PED.data_hora_criacao""" + (" LIMIT 10" if limit else '')
         
         sql = sql.format(schema)
         return self.conexao.execute_query_to_dict(sql, [processado])
@@ -193,8 +193,8 @@ class Tpedidos:
                 PED.Processado = True
                 AND PED.EMITIR = True
                 And Ped.chave_de_acesso Is null
-                ORDER BY PED.dt_emissao desc"""
-
+                ORDER BY PED.data_hora_criacao"""
+        
         sql = sql.format(schema)
         return self.conexao.execute_query_to_dict(sql)
 
@@ -301,7 +301,8 @@ class Tpedido:
                 LOCALESTOQUE,
                 CFOP,
                 TENTATIVAS_ADICIONAIS, 
-                PRIMEIRA_TENTATIVA                                       
+                PRIMEIRA_TENTATIVA,
+                EMITIR_NOTA                                       
                 FROM {}.PEDIDOS PED WHERE PED.id_pedido = %s"""
 
         sql = sql.format(schema)
