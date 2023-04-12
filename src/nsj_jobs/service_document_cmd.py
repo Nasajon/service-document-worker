@@ -26,7 +26,6 @@ class ServiceDocumentCMD():
         
     
     def executar(self):
-        os.path.dirname()
         params = [
             self.exe_service_document,
             self.autoexec,
@@ -37,6 +36,8 @@ class ServiceDocumentCMD():
             self.erp_password, 
             self.parametro_execucao
         ]
-        # TODO log de execução do service document
-        os.chdir(self.dir_instalacao)
+        if self.dir_instalacao[:1] == '\\':
+            os.system(f'pushd {self.dir_instalacao}')
+        else:
+            os.chdir(self.dir_instalacao)
         os.system(" ".join(params))

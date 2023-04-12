@@ -2,7 +2,6 @@
 # !/usr/bin/env python
 # -*- coding: cp1252 -*-
 
-from pytz import timezone
 from nsj_jobs.dao import Tpedido
 from datetime import datetime
 from nsj_jobs.resources.dom.minidom import Document
@@ -140,7 +139,6 @@ def montar_xml_nfe(t_Pedido: Tpedido, arquivo_xml):
     NSJDOC.setAttribute('xmlns', 'http://www.nasajon.com.br/docengine')
     doc.appendChild(NSJDOC)
     base = createNode('NFE', NSJDOC, doc)
-    data_atual = datetime.now(timezone('America/Sao_Paulo')).date()
 
     # NFE
     createNodeChild(
@@ -150,6 +148,7 @@ def montar_xml_nfe(t_Pedido: Tpedido, arquivo_xml):
     createNodeChild(
         'ESTABELECIMENTO', t_Pedido.lstEstabelecimento[0]['estabelecimento'], doc, base)
     createNodeChild('VERSAO', '4.00', doc, base)
+    createNodeChild('SOMENTE_IMPORTACAO', 1 if not t_Pedido.pedido["emitir_nota"] else 0, doc, base)
 
     # DADOSGERAIS
     nivel_1 = createNode('DADOSGERAIS', base, doc)
