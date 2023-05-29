@@ -57,14 +57,14 @@ class EmissaoNota(JobCommand):
                 documentos = self.banco.obterDocumentosEnviados(var_identificador)
                 registro_execucao.informativo(f'Obtendo os registros do pedido de id: {var_id_pedido} e número: {var_identificador}.')
                 
-                if len(documentos) == 0:
+                # if len(documentos) == 0:
                     
-                    registro_execucao.informativo(f'Id do Pedido: {var_id_pedido}. Documento não encontrado para o identificador: {var_identificador}')
-                    self.banco.registraLog.mensagem(
-                        var_id_pedido, 
-                        'Documento não encontrado para o identificador: ' + str(var_identificador), 
-                        tipoMsg.serviceDocument)
-                else:
+                    # registro_execucao.informativo(f'Id do Pedido: {var_id_pedido}. Documento não encontrado para o identificador: {var_identificador}')
+                    # self.banco.registraLog.mensagem(
+                    #     var_id_pedido, 
+                    #     'Documento não encontrado para o identificador: ' + str(var_identificador), 
+                    #     tipoMsg.serviceDocument)
+                if len(documentos) != 0:
                     t_pedido.pedido = pedido
                     
                     registro_execucao.informativo('Verificando os registros de logs criados para o documento')
@@ -182,7 +182,8 @@ class EmissaoNota(JobCommand):
                         t_pedido.atualizarTentativa(t_pedido.pedido['primeira_tentativa'], datetime.now(), t_pedido.pedido['tentativas_adicionais']+1)
                     else:
                         t_pedido.registrarPrimeiraTentativaParaReemissao()
-                    strAviso = f'Erro ao criar arquivo xml para o pedido {var_num_pedido}. Erro: {e}' 
+                    strAviso = f'Erro ao criar arquivo xml para o pedido {var_num_pedido}. Erro: {e}'
+                    log.excecao(e) 
                     registro_execucao.erro_execucao(strAviso)
                     self.banco.registraLog.mensagem(var_id_pedido, strAviso, tipoMsg.inconsistencia)
                     tot_falha = tot_falha + 1
