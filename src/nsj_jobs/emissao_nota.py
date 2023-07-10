@@ -57,13 +57,6 @@ class EmissaoNota(JobCommand):
                 documentos = self.banco.obterDocumentosEnviados(var_identificador)
                 registro_execucao.informativo(f'Obtendo os registros do pedido de id: {var_id_pedido} e número: {var_identificador}.')
                 
-                # if len(documentos) == 0:
-                    
-                    # registro_execucao.informativo(f'Id do Pedido: {var_id_pedido}. Documento não encontrado para o identificador: {var_identificador}')
-                    # self.banco.registraLog.mensagem(
-                    #     var_id_pedido, 
-                    #     'Documento não encontrado para o identificador: ' + str(var_identificador), 
-                    #     tipoMsg.serviceDocument)
                 if len(documentos) != 0:
                     t_pedido.pedido = pedido
                     
