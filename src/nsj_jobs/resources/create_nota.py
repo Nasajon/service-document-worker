@@ -36,7 +36,6 @@ def montar_xml_nfse(t_Pedido: Tpedido, arquivo_xml):
     NSJDOC.setAttribute('xmlns', 'http://www.nasajon.com.br/docengine')
     doc.appendChild(NSJDOC)
     base = createNode('NFSE', NSJDOC, doc)
-    data_atual = datetime.now(timezone('America/Sao_Paulo')).date()
 
     # NFE
     createNodeChild(
@@ -50,8 +49,10 @@ def montar_xml_nfse(t_Pedido: Tpedido, arquivo_xml):
         'SERIE', t_Pedido.pedido['serie_nf'],  doc, nivel_1)
     createNodeChild(
         'SUBSERIE', t_Pedido.pedido['subserie'], doc, nivel_1)
-    createNodeChild('DATAEMISSAO', t_Pedido.pedido['datasaidaentrada']
-                    if t_Pedido.pedido['datasaidaentrada'] >= data_atual else data_atual, doc, nivel_1)
+    createNodeChild(
+        'DATAEMISSAO', t_Pedido.pedido['datasaidaentrada'], doc, nivel_1)
+    createNodeChild('DATASAIDAENTRADA',
+                    t_Pedido.pedido['datasaidaentrada'], doc, nivel_1)
     createNodeChild('DATALANCAMENTO',
                     t_Pedido.pedido['datalancamento'], doc, nivel_1)
     createNodeChild(
@@ -156,10 +157,10 @@ def montar_xml_nfe(t_Pedido: Tpedido, arquivo_xml):
         'SERIE', t_Pedido.pedido['serie_nf'],  doc, nivel_1)
     createNodeChild(
         'SUBSERIE', t_Pedido.pedido['subserie'], doc, nivel_1)
-    createNodeChild('DATAEMISSAO', t_Pedido.pedido['datasaidaentrada']
-                    if t_Pedido.pedido['datasaidaentrada'] >= data_atual else data_atual, doc, nivel_1)
-    createNodeChild('DATASAIDAENTRADA', t_Pedido.pedido['datasaidaentrada']
-                    if t_Pedido.pedido['datasaidaentrada'] >= data_atual else data_atual, doc, nivel_1)
+    createNodeChild(
+        'DATAEMISSAO', t_Pedido.pedido['datasaidaentrada'], doc, nivel_1)
+    createNodeChild('DATASAIDAENTRADA',
+                    t_Pedido.pedido['datasaidaentrada'], doc, nivel_1)
     createNodeChild('DATALANCAMENTO',
                     t_Pedido.pedido['datalancamento'], doc, nivel_1)
     createNodeChild(
