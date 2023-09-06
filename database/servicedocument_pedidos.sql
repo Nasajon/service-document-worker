@@ -27,5 +27,11 @@
   tentativas_adicionais int4 NULL DEFAULT 0,
   primeira_tentativa timestamp NULL,
   ultima_tentativa timestamp NULL,
+  subserie_nf varchar(2),
+  data_lancamento date,
+  municipio_gerador varchar(8),
+  tipo_nota varchar(10) not null default 'NFE',
   CONSTRAINT pedido_id_pedido_pk PRIMARY KEY (id_pedido)
 );
+
+COMMENT ON COLUMN servicedocument.pedidos.tipo_nota is 'NFE/NFSE';

@@ -9,12 +9,125 @@ from nsj_jobs.resources.dom.minidom import Document
 #from xml.etree.ElementTree import Element,  SubElement,  Comment,  tostring
 # import urllib
 
+
 def montar_LayoutCalculaImpostos(t_Pedido: Tpedido, pathFile, num_notaFiscal):
 
     arquivo_nome = formataNumZeros(
         30, int(t_Pedido.pedido['num_pedido'])) + '.xml'
     arquivo_xml = pathFile + '\\' + arquivo_nome
 
+    if t_Pedido.pedido['tipo_nota'] == 'NFE':
+        return montar_xml_nfe(t_Pedido, arquivo_xml)
+    elif t_Pedido.pedido['tipo_nota'] == 'NFSE':
+        return montar_xml_nfse(t_Pedido, arquivo_xml)
+    else: 
+        raise Exception('Tipo de nota inválido.')
+
+
+def montar_xml_nfse(t_Pedido: Tpedido, arquivo_xml):
+    # Criando um arquivo para escrita
+    output = open(arquivo_xml, "w")
+
+    # Criando um minidom-document
+    doc = Document()
+
+    # Criando a base geral do elemento
+    NSJDOC = doc.createElement('NSJDOC')
+    NSJDOC.setAttribute('xmlns', 'http://www.nasajon.com.br/docengine')
+    doc.appendChild(NSJDOC)
+    base = createNode('NFSE', NSJDOC, doc)
+    data_atual = datetime.now(timezone('America/Sao_Paulo')).date()
+
+    # NFE
+    createNodeChild(
+        'GRUPOEMPRESARIAL', t_Pedido.lstEstabelecimento[0]['grupoempresarial'], doc, base)
+    createNodeChild(
+        'ESTABELECIMENTO', t_Pedido.lstEstabelecimento[0]['estabelecimento'], doc, base)
+
+    # DADOSGERAIS
+    nivel_1 = createNode('DADOSGERAIS', base, doc)
+    createNodeChild(
+        'SERIE', t_Pedido.pedido['serie_nf'],  doc, nivel_1)
+    createNodeChild(
+        'SUBSERIE', t_Pedido.pedido['subserie'], doc, nivel_1)
+    createNodeChild('DATAEMISSAO', t_Pedido.pedido['datasaidaentrada']
+                    if t_Pedido.pedido['datasaidaentrada'] >= data_atual else data_atual, doc, nivel_1)
+    createNodeChild('DATALANCAMENTO',
+                    t_Pedido.pedido['datalancamento'], doc, nivel_1)
+    createNodeChild(
+        'MUNICIPIOGERADOR', t_Pedido.pedido['municipio_gerador'], doc, nivel_1)
+
+    # DESTINATARIO
+    nivel_1 = createNode('DESTINATARIO', base, doc)
+    createNodeChild(
+        'CODIGO', t_Pedido.lstCliente[0]['codigo'], doc, nivel_1)
+    createNodeChild(
+        'CPF_CNPJ', t_Pedido.lstCliente[0]['cpf_cnpj'], doc, nivel_1)
+    createNodeChild('NOME', t_Pedido.lstCliente[0]['nome'], doc, nivel_1)
+    createNodeChild(
+        'NOMEFANTASIA', t_Pedido.lstCliente[0]['nomefantasia'], doc, nivel_1)
+    createNodeChild('EMAIL', t_Pedido.lstCliente[0]['email'], doc, nivel_1)
+
+    # ENDERECO
+    nivel_2 = createNode('ENDERECO', nivel_1, doc)
+    createNodeChild(
+        'TIPOLOGRADOURO', t_Pedido.endPrestacao['tipo_logradouro'], doc, nivel_2)
+    createNodeChild(
+        'LOGRADOURO', t_Pedido.endPrestacao['logradouro'], doc, nivel_2)
+    createNodeChild(
+        'NUMERO', t_Pedido.endPrestacao['numero'], doc, nivel_2)
+    createNodeChild(
+        'COMPLEMENTO', t_Pedido.endPrestacao['complemento'], doc, nivel_2)
+    createNodeChild(
+        'BAIRRO', t_Pedido.endPrestacao['bairro'], doc, nivel_2)
+    createNodeChild(
+        'CODIGOMUNICIPIO', t_Pedido.endPrestacao['codigo_municipio'], doc, nivel_2)
+    createNodeChild(
+        'MUNICIPIO', t_Pedido.endPrestacao['nome_municipio'], doc, nivel_2)
+    createNodeChild('UF', t_Pedido.endPrestacao['uf'], doc, nivel_2)
+    createNodeChild('CEP', t_Pedido.endPrestacao['cep'], doc, nivel_2)
+    createNodeChild(
+        'PAIS', t_Pedido.endPrestacao['codigo_pais'], doc, nivel_2)
+    createNodeChild(
+        'PAISNOME', t_Pedido.endPrestacao['nome_pais'], doc, nivel_2)
+    createNodeChild(
+        'TELEFONE', t_Pedido.endPrestacao['telefone'], doc, nivel_2)
+    createNodeChild(
+        'REFERENCIA', t_Pedido.endPrestacao['referencia'], doc, nivel_2)
+
+    # SERVIÇOS
+    nivel_1 = createNode('SERVICOS', base, doc)
+    for servico in t_Pedido.lstServicos:
+        nivel_2 = createNode('SERVICO', nivel_1, doc)
+        createNodeChild('CODIGO', servico.get('codigo'), doc, nivel_2)
+        createNodeChild('QUANTIDADE', servico.get('quantidade'), doc, nivel_2)
+        createNodeChild('VALORUNITARIO', servico.get(
+            'valor_unitario'), doc, nivel_2)
+        createNodeChild('VALORDESCONTO', servico.get(
+            'valordesconto'), doc, nivel_2)
+
+    # FORMA DE PAGAMENTO
+    nivel_1 = createNode('FORMASPAGAMENTOS', base, doc)
+    for pagamento in t_Pedido.lstFormaPagamento:
+        nivel_2 = createNode('FORMAPAGAMENTO', nivel_1, doc)
+        createNodeChild('TIPOFORMAPAGAMENTO', pagamento.get(
+            'tipoformapagamento'), doc, nivel_2)
+        nivel_3 = createNode('PARCELAS', nivel_2, doc)
+        for parcela in pagamento.get('parcelas'):
+            nivel_4 = createNode('PARCELA', nivel_3, doc)
+            createNodeChild('NUMERO', parcela.get('numero'), doc, nivel_4)
+            createNodeChild('VENCIMENTO', parcela.get(
+                'vencimento'), doc, nivel_4)
+            createNodeChild('VALOR', parcela.get('valor'), doc, nivel_4)
+        createNodeChild('VALOR', pagamento.get('valor_total'), doc, nivel_2)
+
+    doc.writexml(output, " ", " ", "\n", "UTF-16")
+    # Fechando o arquivo
+    output.close()
+    return arquivo_xml
+
+
+def montar_xml_nfe(t_Pedido: Tpedido, arquivo_xml):
     # Criando um arquivo para escrita
     output = open(arquivo_xml, "w")
 
@@ -43,8 +156,10 @@ def montar_LayoutCalculaImpostos(t_Pedido: Tpedido, pathFile, num_notaFiscal):
         'SERIE', t_Pedido.pedido['serie_nf'],  doc, nivel_1)
     createNodeChild(
         'SUBSERIE', t_Pedido.pedido['subserie'], doc, nivel_1)
-    createNodeChild('DATAEMISSAO', t_Pedido.pedido['datasaidaentrada'], doc, nivel_1)
-    createNodeChild('DATASAIDAENTRADA', t_Pedido.pedido['datasaidaentrada'], doc, nivel_1)
+    createNodeChild('DATAEMISSAO', t_Pedido.pedido['datasaidaentrada']
+                    if t_Pedido.pedido['datasaidaentrada'] >= data_atual else data_atual, doc, nivel_1)
+    createNodeChild('DATASAIDAENTRADA', t_Pedido.pedido['datasaidaentrada']
+                    if t_Pedido.pedido['datasaidaentrada'] >= data_atual else data_atual, doc, nivel_1)
     createNodeChild('DATALANCAMENTO',
                     t_Pedido.pedido['datalancamento'], doc, nivel_1)
     createNodeChild(
@@ -175,7 +290,8 @@ def montar_LayoutCalculaImpostos(t_Pedido: Tpedido, pathFile, num_notaFiscal):
         createNodeChild('TIPOFORMAPAGAMENTO', pagamento.get(
             'tipoformapagamento'), doc, nivel_2)
         createNodeChild('NUMERO', strNumParc, doc, nivel_2)
-        createNodeChild('VENCIMENTO', pagamento.get('dt_vencimento'), doc, nivel_2)
+        createNodeChild('VENCIMENTO', pagamento.get('dt_vencimento') if pagamento.get(
+            'dt_vencimento') >= data_atual else data_atual, doc, nivel_2)
         createNodeChild('VALOR', pagamento.get(
             'valor_parcela'), doc, nivel_2)
         parc_num += 1
@@ -210,4 +326,3 @@ def formataNumZeros(quant_zeros: int, numero: int) -> str:
     sfmt = '%0{}d'.format(quant_zeros)
     num_zeros = sfmt % (numero,)
     return num_zeros
-
