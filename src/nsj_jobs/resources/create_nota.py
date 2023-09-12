@@ -291,8 +291,8 @@ def montar_xml_nfe(t_Pedido: Tpedido, arquivo_xml):
         createNodeChild('TIPOFORMAPAGAMENTO', pagamento.get(
             'tipoformapagamento'), doc, nivel_2)
         createNodeChild('NUMERO', strNumParc, doc, nivel_2)
-        createNodeChild('VENCIMENTO', pagamento.get('dt_vencimento') if pagamento.get(
-            'dt_vencimento') >= data_atual else data_atual, doc, nivel_2)
+        createNodeChild('VENCIMENTO', pagamento.get(
+            'dt_vencimento'), doc, nivel_2)
         createNodeChild('VALOR', pagamento.get(
             'valor_parcela'), doc, nivel_2)
         parc_num += 1
