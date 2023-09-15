@@ -270,11 +270,7 @@ class EmissaoNota(JobCommand):
             if a_pedido.pedido["tipo_nota"] in ['NFE'] and not a_pedido.pedido['tp_operacao'] in [item.value for item in Tp_Operacao]:
                strAviso = strmsg.format('Tipo da Operação', 'TP_OPERACAO', a_pedido.pedido['tp_operacao'] )
                erroLista.append( strAviso )
-                        
-            if (a_pedido.pedido['serie_nf'] in ['', None]):
-                strAviso = strmsg.format('Série da Nota Fiscal', 'SERIE_NF', 'vazio' )
-                erroLista.append( strAviso )
-                      
+
             if a_pedido.pedido["tipo_nota"] in ['NFE'] and a_pedido.pedido['tipodocumento'] != 55:
                 strAviso = strmsg.format('Tipo de documento', 'TIPODOCUMENTO', a_pedido.pedido['tipodocumento'] )
                 erroLista.append( strAviso )
