@@ -25,16 +25,14 @@ class EmissaoNota(JobCommand):
             self.registro_execucao = registro_execucao
             self.banco = DAO(db)
             registro_execucao.informativo('Obtendo o caminho configurado para salvar os arquivos xml.')
-            path_Envio = self.banco.xml_serviceDocument.obterCaminhoArquivo(70, 0)
-            if path_Envio is None:
-                registro_execucao.informativo('Diretório de envio para salva do arquivo xml não foi definido no Admin.')
-                return {"mensagem": "Diretório de envio para salva do arquivo xml não foi definido no Admin."}
-            
-            path_Cancelamento = self.banco.xml_serviceDocument.obterCaminhoArquivo(74, 0)
-            if path_Cancelamento is None:
-                registro_execucao.informativo('Diretório de cancelamento para salva do arquivo xml não foi definido no Admin.')
-                return {"mensagem": "Diretório de cancelamento para salva do arquivo xml não foi definido no Admin."}
-            
+            path_EnvioNFSE = self.banco.xml_serviceDocument.obterCaminhoArquivo(82,0)
+            path_EnvioNFE = self.banco.xml_serviceDocument.obterCaminhoArquivo(70, 0)
+
+
+            path_CancelamentoNFSE = self.banco.xml_serviceDocument.obterCaminhoArquivo(86, 0)
+            path_CancelamentoNFE = self.banco.xml_serviceDocument.obterCaminhoArquivo(74, 0)
+
+
             # obtem os pedidos que ja foram processados (xml criados) da tabela de controle
             # obtem os registros de envios de xml em documentos (servicedocument.documentos)
             # atualiza a tabela de pedidos, de acordo com os status do envio do xml em documentos
@@ -156,13 +154,20 @@ class EmissaoNota(JobCommand):
                     continue
 
                 if int(pedido['status']) == Status.Cancelamento_Fiscal.value:
-                    pathdefault = path_Cancelamento
+                    pathdefault = path_CancelamentoNFSE if t_pedido.pedido['tipo_nota'] == 'NFSE' else path_CancelamentoNFE
+                    s_msg = 'Diretório de cancelamento para salvar o arquivo xml não foi definido no Admin.'
                 else:
-                    pathdefault = path_Envio
+                    pathdefault = path_EnvioNFSE if t_pedido.pedido['tipo_nota'] == 'NFSE' else path_EnvioNFE
+                    s_msg = 'Diretório de envio para salvar o arquivo xml não foi definido no Admin.'
+
 
                 registro_execucao.informativo('Iniciando a criacao do arquivo xml...')
 
                 try:
+                    if pathdefault is None:
+                        registro_execucao.informativo(s_msg)
+                        raise Exception(s_msg)
+
                     montar_LayoutCalculaImpostos(t_pedido, pathdefault, strNum_nf)
 
                     t_pedido.updatePedidoProcessado( var_id_pedido )
