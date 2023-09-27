@@ -11,7 +11,7 @@ class EnvConfig:
 
     def __init__(self):
         self.database_host = os.getenv("database_host", "localhost")
-        self.database_name = os.getenv("database_name", "integratto2")
+        self.database_name = os.getenv("database_name", "nasajon")
         self.database_user = os.getenv("database_user", "postgres")
         self.database_password = os.getenv("database_password", "postgres")
         self.database_port = os.getenv("database_port", "5432")

@@ -13,12 +13,14 @@ from nsj_jobs.resources.dom.minidom import Document
 def montar_LayoutCalculaImpostos(t_Pedido: Tpedido, pathFile, num_notaFiscal):
 
     arquivo_nome = formataNumZeros(
-        30, int(t_Pedido.pedido['num_pedido'])) + '.xml'
+        30, int(t_Pedido.pedido['num_pedido']))
     arquivo_xml = pathFile + '\\' + arquivo_nome
 
     if t_Pedido.pedido['tipo_nota'] == 'NFE':
+        arquivo_xml = arquivo_xml + '.xml'
         return montar_xml_nfe(t_Pedido, arquivo_xml)
     elif t_Pedido.pedido['tipo_nota'] == 'NFSE':
+        arquivo_xml = arquivo_xml + '_nfse.xml'
         return montar_xml_nfse(t_Pedido, arquivo_xml)
     else: 
         raise Exception('Tipo de nota inválido.')
@@ -57,7 +59,7 @@ def montar_xml_nfse(t_Pedido: Tpedido, arquivo_xml):
                     t_Pedido.pedido['datalancamento'], doc, nivel_1)
     createNodeChild(
         'MUNICIPIOGERADOR', t_Pedido.pedido['municipio_gerador'], doc, nivel_1)
-
+    createNodeChild('CADASTRADOPOR', 'MESTRE', doc, nivel_1)
     # DESTINATARIO
     nivel_1 = createNode('DESTINATARIO', base, doc)
     createNodeChild(
