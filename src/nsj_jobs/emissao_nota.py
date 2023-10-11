@@ -1,17 +1,13 @@
 
-import traceback
 from nsj_jobs.resources.envconfig import EnvConfig
-from nsj_jobs.resources.log import Log
 from nsj_jobs.service_document_cmd import ServiceDocumentCMD
-from nsj_jobs.dao import DAO, Status, StatusDocumento, Tp_Operacao, tipoMsg, Tpedidos, Tpedido
+from nsj_jobs.dao import DAO, Status, StatusDocumento, Tp_Operacao, tipoMsg, Tpedido
 from nsj_jobs.resources.job_command import JobCommand
 from nsj_jobs.resources.create_nota import montar_LayoutCalculaImpostos
-from datetime import date
 from datetime import datetime, timedelta
-import json  # utilizado em modo debug
 
 
-class EmissaoNota(JobCommand):
+class ImportacaoEmissaoNota(JobCommand):
     def __init__(self):
         self.banco = None
         self.nota_fiscal = None
@@ -27,19 +23,15 @@ class EmissaoNota(JobCommand):
             self.banco = DAO(db)
             registro_execucao.informativo(
                 'Obtendo o caminho configurado para salvar os arquivos xml.')
-            path_Envio = self.banco.xml_serviceDocument.obterCaminhoArquivo(
+            path_EnvioNFSE = self.banco.xml_serviceDocument.obterCaminhoArquivo(
+                82, 0)
+            path_EnvioNFE = self.banco.xml_serviceDocument.obterCaminhoArquivo(
                 70, 0)
-            if path_Envio is None:
-                registro_execucao.informativo(
-                    'Diretório de envio para salva do arquivo xml não foi definido no Admin.')
-                return {"mensagem": "Diretório de envio para salva do arquivo xml não foi definido no Admin."}
 
-            path_Cancelamento = self.banco.xml_serviceDocument.obterCaminhoArquivo(
+            path_CancelamentoNFSE = self.banco.xml_serviceDocument.obterCaminhoArquivo(
+                86, 0)
+            path_CancelamentoNFE = self.banco.xml_serviceDocument.obterCaminhoArquivo(
                 74, 0)
-            if path_Cancelamento is None:
-                registro_execucao.informativo(
-                    'Diretório de cancelamento para salva do arquivo xml não foi definido no Admin.')
-                return {"mensagem": "Diretório de cancelamento para salva do arquivo xml não foi definido no Admin."}
 
             # obtem os pedidos que ja foram processados (xml criados) da tabela de controle
             # obtem os registros de envios de xml em documentos (servicedocument.documentos)
@@ -186,14 +178,22 @@ class EmissaoNota(JobCommand):
                     continue
 
                 if int(pedido['status']) == Status.Cancelamento_Fiscal.value:
-                    pathdefault = path_Cancelamento
+                    pathdefault = path_CancelamentoNFSE if t_pedido.pedido[
+                        'tipo_nota'] == 'NFSE' else path_CancelamentoNFE
+                    s_msg = 'Diretório de cancelamento para salvar o arquivo xml não foi definido no Admin.'
                 else:
-                    pathdefault = path_Envio
+                    pathdefault = path_EnvioNFSE if t_pedido.pedido[
+                        'tipo_nota'] == 'NFSE' else path_EnvioNFE
+                    s_msg = 'Diretório de envio para salvar o arquivo xml não foi definido no Admin.'
 
                 registro_execucao.informativo(
                     'Iniciando a criacao do arquivo xml...')
 
                 try:
+                    if pathdefault is None:
+                        registro_execucao.informativo(s_msg)
+                        raise Exception(s_msg)
+
                     montar_LayoutCalculaImpostos(
                         t_pedido, pathdefault, strNum_nf)
 
@@ -212,14 +212,13 @@ class EmissaoNota(JobCommand):
                     else:
                         t_pedido.registrarPrimeiraTentativaParaReemissao()
                     strAviso = f'Erro ao criar arquivo xml para o pedido {var_num_pedido}. Erro: {e}'
-                    log.excecao(e)
                     registro_execucao.erro_execucao(strAviso)
                     self.banco.registraLog.mensagem(
                         var_id_pedido, strAviso, tipoMsg.inconsistencia)
                     tot_falha = tot_falha + 1
 
-            registro_execucao.informativo("Total Lidos: {0} | Total Processados:{1}, Total Falhas:{2}".format(
-                str(total_reg), str(total_proc), str(tot_falha)))
+            registro_execucao.informativo(
+                f"Total Lidos: {total_reg} | Total Processados:{total_proc}, Total Falhas:{tot_falha}")
 
             # Execução do ServiceDocument
             if entrada['env'] == 'docker':
@@ -227,7 +226,8 @@ class EmissaoNota(JobCommand):
             elif entrada['env'] == 'jobmanager':
                 dirInstalacaoERP = self.banco.dir_instalacao_erp.obterDiretorioInstalacao()
 
-            serviceDocument = ServiceDocumentCMD(dirInstalacaoERP, entrada)
+            serviceDocument = ServiceDocumentCMD(
+                dirInstalacaoERP, entrada)
             serviceDocument.executar()
 
         except Exception as e:
@@ -242,8 +242,8 @@ class EmissaoNota(JobCommand):
 
         # Quando não houverem tentativas adicionais
         if self.maximoTentativasConfig == 1:
-            if tentativasAdicionais == 0:
-                t_pedido.atualizarTentativa(datetime.now(), datetime.now())
+            t_pedido.atualizarTentativa(
+                t_pedido.pedido['datahora_processamento'], t_pedido.pedido['datahora_processamento'])
             return False
 
         tentativaAdicionalAtual = tentativasAdicionais + 1
@@ -252,6 +252,8 @@ class EmissaoNota(JobCommand):
             # Caso seja a primeira retentativa
             if dataHoraPrimeiraTentativa is None:
                 dataHoraPrimeiraTentativa = t_pedido.pedido['datahora_processamento']
+                t_pedido.atualizarTentativa(
+                    dataHoraPrimeiraTentativa, datetime.now())
 
             # Calcula a partir de quando deve ser a próxima tentativa
             proximaTentativa = dataHoraPrimeiraTentativa + \
@@ -269,29 +271,31 @@ class EmissaoNota(JobCommand):
         strPedido = str(a_pedido.pedido['id_pedido'])
         num_pedido = a_pedido.pedido['num_pedido']
 
-        if (a_pedido.lstCliente == None):
-            strAviso = f"Erro ao criar arquivo xml para o pedido {num_pedido}. Cliente não encontrado para o CNPJ/CPF informado: {a_pedido.pedido['cnpj_cliente']}"
+        if (a_pedido.lstCliente is None):
+            strAviso = f"""Erro ao criar arquivo xml para o pedido {num_pedido}. 
+                        Cliente não encontrado para o CNPJ/CPF informado: {a_pedido.pedido['cnpj_cliente']}"""
             self.registro_execucao.informativo(strAviso)
             self.banco.registraLog.mensagem(
                 strPedido, strAviso, tipoMsg.inconsistencia)
             return False
 
-        if (a_pedido.lstEndCliente == None):
+        if (a_pedido.lstEndCliente is None):
             strAviso = f'Erro ao criar arquivo xml para o pedido {num_pedido}. Endereço do Cliente não retornou registros!'
             self.registro_execucao.informativo(strAviso)
             self.banco.registraLog.mensagem(
                 strPedido, strAviso, tipoMsg.inconsistencia)
             return False
 
-        if (a_pedido.lstFormaPagamento == None):
+        if (a_pedido.lstFormaPagamento is None):
             strAviso = f'Erro ao criar arquivo xml para o pedido {num_pedido}.Forma de Pagamento não retornou registros!'
             self.registro_execucao.informativo(strAviso)
             self.banco.registraLog.mensagem(
                 strPedido, strAviso, tipoMsg.inconsistencia)
             return False
 
-        if (a_pedido.lstEstabelecimento == None):
-            strAviso = f"Erro ao criar arquivo xml para o pedido {num_pedido}.Estabelecimento não encontrado para CNPJ Informado: {a_pedido.pedido['cnpj_estabelecimento']}"
+        if (a_pedido.lstEstabelecimento is None):
+            strAviso = f"""Erro ao criar arquivo xml para o pedido {num_pedido}.
+                        Estabelecimento não encontrado para CNPJ Informado: {a_pedido.pedido['cnpj_estabelecimento']}"""
             self.registro_execucao.informativo(strAviso)
             self.banco.registraLog.mensagem(
                 strPedido, strAviso, tipoMsg.inconsistencia)
@@ -307,23 +311,23 @@ class EmissaoNota(JobCommand):
         try:
             self.registro_execucao.informativo('Validando dados do pedido.')
             # validar dados do pedido:
-            if a_pedido.pedido['id_operacao'] == '':
+            if a_pedido.pedido["tipo_nota"] in ['NFE'] and a_pedido.pedido['id_operacao'] == '':
                 strAviso = strmsg.format(
                     'Código da Operação', 'COD_OPERACAO', 'vazio')
                 erroLista.append(strAviso)
 
-            if a_pedido.pedido['tp_operacao'] not in [item.value for item in Tp_Operacao]:
+            if a_pedido.pedido["tipo_nota"] in ['NFE'] and a_pedido.pedido['tp_operacao'] not in [item.value for item in Tp_Operacao]:
                 strAviso = strmsg.format(
                     'Tipo da Operação', 'TP_OPERACAO', a_pedido.pedido['tp_operacao'])
                 erroLista.append(strAviso)
 
-            if a_pedido.pedido['tipodocumento'] != 55:
+            if a_pedido.pedido["tipo_nota"] in ['NFE'] and a_pedido.pedido['tipodocumento'] != 55:
                 strAviso = strmsg.format(
                     'Tipo de documento', 'TIPODOCUMENTO', a_pedido.pedido['tipodocumento'])
                 erroLista.append(strAviso)
 
-            if var_loc_estoq != '' and var_loc_estoq is not None:
-                if not self.banco.localEstoqueValido(var_loc_estoq, var_id_Estab):
+            if (var_loc_estoq != '') and var_loc_estoq is not None:
+                if a_pedido.pedido["tipo_nota"] in ['NFE'] and not self.banco.localEstoqueValido(var_loc_estoq, var_id_Estab):
                     strAviso = strmsg.format(
                         'Local de Estoque', 'LOCALESTOQUE', var_loc_estoq)
                     erroLista.append(strAviso)
@@ -333,7 +337,7 @@ class EmissaoNota(JobCommand):
                 erroLista.append(strAviso)
 
             date_time_str = str(a_pedido.pedido['dt_emissao'])
-            if (date_time_str == '') and (date_time_str == None):
+            if (date_time_str == '') and (date_time_str is None):
                 erroLista.append('Data de Emissão não preenchida')
 
             # validar dados do cliente:
@@ -344,34 +348,35 @@ class EmissaoNota(JobCommand):
 
             self.registro_execucao.informativo('Validando dados do produto.')
             # validar dados do produto (itens do pedido):
-            for produto in a_pedido.lstProdutos:
+            if a_pedido.pedido["tipo_nota"] in ['NFE']:
+                for produto in a_pedido.lstProdutos:
 
-                if ((produto.get('sem_saldo') == 1) and (produto.get('mensagem_erro') != '')):
-                    erroLista.append(produto.get('mensagem_erro'))
+                    if ((produto.get('sem_saldo') == 1) and (produto.get('mensagem_erro') != '')):
+                        erroLista.append(produto.get('mensagem_erro'))
 
-                if produto.get('prod_nao_existe') == 1:
-                    strAviso = strmsg.format(
-                        'Código do Produto', 'COD_PRODUTO', produto.get('cod_produto'))
-                    erroLista.append(strAviso)
-
-                var_loc_estoq = produto.get('localestoque')
-
-                if (var_loc_estoq != '') and (var_loc_estoq != None):
-                    if not self.banco.localEstoqueValido(var_loc_estoq, var_id_Estab):
-                        erroLista.append(
-                            'Valor inválido informado para o campo [LOCALESTOQUE] no item.')
-                else:
-                    erroLista.append(
-                        'Valor não foi informado para o campo [LOCALESTOQUE] no item.')
-
-                if (produto.get('documentoreferenciado_chave') != None) and (produto.get('documentoreferenciado_chave') != ''):
-                    if (len(produto.get('documentoreferenciado_chave')) < 44):
-                        strAviso = strmsg.format('Documento referenciado', 'DOCUMENTOREFERENCIADO_CHAVE', produto.get(
-                            'documentoreferenciado_chave'))
+                    if produto.get('prod_nao_existe') == 1:
+                        strAviso = strmsg.format(
+                            'Código do Produto', 'COD_PRODUTO', produto.get('cod_produto'))
                         erroLista.append(strAviso)
 
+                    var_loc_estoq = str(produto.get('localestoque'))
+
+                    if (var_loc_estoq != '') and (var_loc_estoq is not None):
+                        if not self.banco.localEstoqueValido(var_loc_estoq, var_id_Estab):
+                            erroLista.append(
+                                'Valor inválido informado para o campo [LOCALESTOQUE] no item.')
+                    else:
+                        erroLista.append(
+                            'Valor não foi informado para o campo [LOCALESTOQUE] no item.')
+
+                    if (produto.get('documentoreferenciado_chave') is not None) and (produto.get('documentoreferenciado_chave') != ''):
+                        if (len(produto.get('documentoreferenciado_chave')) < 44):
+                            strAviso = strmsg.format('Documento referenciado', 'DOCUMENTOREFERENCIADO_CHAVE', produto.get(
+                                'documentoreferenciado_chave'))
+                            erroLista.append(strAviso)
+
             for pagamento in a_pedido.lstFormaPagamento:
-                if (pagamento.get('tipoformapagamento') == None) or (pagamento.get('tipoformapagamento') == ''):
+                if (pagamento.get('tipoformapagamento') is None) or (pagamento.get('tipoformapagamento') == ''):
                     strAviso = strmsg.format(
                         'Tipo de Pagamento', 'TIPOFORMAPAGAMENTO', pagamento.get('tipoformapagamento'))
                     erroLista.append(strAviso)
@@ -382,7 +387,7 @@ class EmissaoNota(JobCommand):
                 self.listarErros(strPedido, erroLista,
                                  tipoMsg.inconsistencia, num_pedido)
 
-        except:
+        except Exception:
             self.listarErros(strPedido, erroLista,
                              tipoMsg.inconsistencia, num_pedido)
             return False
@@ -428,4 +433,4 @@ class EmissaoNota(JobCommand):
 
 # Para teste
 if __name__ == '__main__':
-    EmissaoNota().execute_cmd({'env': 'docker'})
+    ImportacaoEmissaoNota().execute_cmd({'env': 'docker'})
