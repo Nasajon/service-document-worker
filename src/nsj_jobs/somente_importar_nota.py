@@ -114,7 +114,7 @@ class ImportacaoNota(JobCommand):
                                     var_id_pedido, strAviso, tipoMsg.serviceDocument)
 
                                 # Verifica se deve tentar de novo. Se não puder tentar de novo, rejeita
-                                if not self.iterarTentativaParaServiceDocument(t_pedido):
+                                if not self.iterarTentativaParaServiceDocument(t_pedido, documento):
                                     t_pedido.updateSituacao(
                                         Status.Rejeitado.value)
 
@@ -235,14 +235,15 @@ class ImportacaoNota(JobCommand):
             registro_execucao.exception_execucao(mensagem)
 
     # Reagendar um pedido para ser reprocessado pelo worker. Retorna se ainda tem tentativas disponíveis ou não
-    def iterarTentativaParaServiceDocument(self, t_pedido: Tpedido):
+    def iterarTentativaParaServiceDocument(self, t_pedido: Tpedido, documento):
         # Retorna True se houverem tentativas restantes antes de falhar, False do contrário
         dataHoraPrimeiraTentativa = t_pedido.pedido['primeira_tentativa']
         tentativasAdicionais = t_pedido.pedido['tentativas_adicionais']
 
         # Quando não houverem tentativas adicionais
         if self.maximoTentativasConfig == 1:
-            t_pedido.atualizarTentativa(t_pedido.pedido['datahora_processamento'], t_pedido.pedido['datahora_processamento'])
+            t_pedido.atualizarTentativa(documento.get(
+                'datahora_inclusao'), documento.get('datahora_inclusao'))
             return False
 
         tentativaAdicionalAtual = tentativasAdicionais + 1
@@ -250,8 +251,9 @@ class ImportacaoNota(JobCommand):
 
             # Caso seja a primeira retentativa
             if dataHoraPrimeiraTentativa is None:
-                dataHoraPrimeiraTentativa = t_pedido.pedido['datahora_processamento']
-                t_pedido.atualizarTentativa(dataHoraPrimeiraTentativa, datetime.now())
+                dataHoraPrimeiraTentativa = documento.get('datahora_inclusao')
+                t_pedido.atualizarTentativa(documento.get(
+                    'datahora_inclusao'), documento.get('datahora_inclusao'))
 
             # Calcula a partir de quando deve ser a próxima tentativa
             proximaTentativa = dataHoraPrimeiraTentativa + \
@@ -259,7 +261,7 @@ class ImportacaoNota(JobCommand):
                           self.intervalo_tentativas)
             if datetime.now() > proximaTentativa:
                 t_pedido.atualizarTentativa(
-                    dataHoraPrimeiraTentativa, datetime.now(), tentativaAdicionalAtual)
+                    dataHoraPrimeiraTentativa, documento.get('datahora_inclusao'), tentativaAdicionalAtual)
             return True
 
         return False
