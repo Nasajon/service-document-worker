@@ -189,7 +189,7 @@ class Tpedidos:
                 else:
                     strSituacao = strSituacao + ',' + str(sCod.value)
 
-        sql = """SELECT ID_PEDIDO, NUM_PEDIDO, NUM_EXTERNO, STATUS, TENTATIVAS_ADICIONAIS, PRIMEIRA_TENTATIVA, ULTIMA_TENTATIVA, datahora_processamento
+        sql = """SELECT ID_PEDIDO, NUM_PEDIDO, NUM_EXTERNO, STATUS, TENTATIVAS_ADICIONAIS, PRIMEIRA_TENTATIVA, ULTIMA_TENTATIVA, datahora_processamento, emitir_nota
                 FROM {0}.PEDIDOS  PED
                 WHERE PED.STATUS in (""" + strSituacao + """) and
                 PED.Processado = True
