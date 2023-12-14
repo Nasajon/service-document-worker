@@ -41,6 +41,12 @@ class ImportacaoNota(JobCommand):
                                StatusDocumento.sdcErroEmissao.value,
                                StatusDocumento.sdcErroConsulta.value,
                                StatusDocumento.sdcRespondidoComFalha.value]
+            documento_situacoes = [StatusDocumento.sdcTransmitido,
+                                    StatusDocumento.sdcImportado,
+                                    StatusDocumento.sdcErroProcessamento,
+                                    StatusDocumento.sdcErroEmissao,
+                                    StatusDocumento.sdcErroConsulta,
+                                    StatusDocumento.sdcRespondidoComFalha]
             # Aberto = 0 | Reemitir = 3 | Cancelamento_Fiscal = 5
             situacoes = [Status.Aberto, Status.Reemitir,
                          Status.Cancelamento_Fiscal]
@@ -56,7 +62,7 @@ class ImportacaoNota(JobCommand):
                 var_id_pedido = pedido.get('id_pedido')
                 var_identificador = int(pedido.get('num_pedido'))
                 documentos = self.banco.obterDocumentosEnviados(
-                    var_identificador)
+                    var_identificador, documento_situacoes)
                 registro_execucao.informativo(
                     f'Obtendo os registros do pedido de id: {var_id_pedido} e número: {var_identificador}.')
 
@@ -67,37 +73,36 @@ class ImportacaoNota(JobCommand):
                         'Verificando os registros de logs criados para o documento')
                     for documento in documentos:
                         if (int(documento.get('status')) == StatusDocumento.sdcTransmitido.value):
-                            if documento.get('chave_emissao') is not None:
-                                # sucesso! Status = 2
-                                statusDocto = documento.get('status')
-                                statusAtual = pedido.get('status')
-                                novoStatus = self.novoStatus(
-                                    statusDocto, statusAtual)
+                            # sucesso! Status = 2
+                            statusDocto = documento.get('status')
+                            statusAtual = pedido.get('status')
+                            novoStatus = self.novoStatus(
+                                statusDocto, statusAtual)
 
-                                if (novoStatus is None) or (novoStatus == statusAtual):
-                                    registro_execucao.informativo(
-                                        f'Id do pedido: {var_id_pedido}. Novo status inválido: {novoStatus}')
-                                    self.banco.registraLog.mensagem(var_id_pedido, 'Novo Status inválido: ' + str(novoStatus),
-                                                                    tipoMsg.inconsistencia, documento.get('documento'))
-                                    continue
-                                else:
-                                    registro_execucao.informativo(
-                                        'Atualizando a tabela de pedidos, de acordo com os status do envio do xml em documentos.')
+                            if (novoStatus is None) or (novoStatus == statusAtual):
+                                registro_execucao.informativo(
+                                    f'Id do pedido: {var_id_pedido}. Novo status inválido: {novoStatus}')
+                                self.banco.registraLog.mensagem(var_id_pedido, 'Novo Status inválido: ' + str(novoStatus),
+                                                                tipoMsg.inconsistencia, documento.get('documento'))
+                                continue
+                            else:
+                                registro_execucao.informativo(
+                                    'Atualizando a tabela de pedidos, de acordo com os status do envio do xml em documentos.')
 
-                                    t_pedido.camposAtualizar['status'] = str(
-                                        novoStatus)
-                                    t_pedido.camposAtualizar['chave_de_acesso'] = documento.get(
-                                        'chave_emissao')
-                                    t_pedido.camposAtualizar['numero_nf'] = documento.get(
-                                        'numero')
-                                    t_pedido.camposAtualizar['id_docfis'] = documento.get(
-                                        'id_docfis')
-                                    t_pedido.camposAtualizar['mensagem'] = documento.get(
-                                        'mensagem_retorno')
-                                    t_pedido.camposAtualizar['id_doc_serv_msg'] = documento.get(
-                                        'documento')
-                                    t_pedido.updatePedido()
-                                    break
+                                t_pedido.camposAtualizar['status'] = str(
+                                    novoStatus)
+                                t_pedido.camposAtualizar['chave_de_acesso'] = documento.get(
+                                    'chave_emissao')
+                                t_pedido.camposAtualizar['numero_nf'] = documento.get(
+                                    'numero')
+                                t_pedido.camposAtualizar['id_docfis'] = documento.get(
+                                    'id_docfis')
+                                t_pedido.camposAtualizar['mensagem'] = documento.get(
+                                    'mensagem_retorno')
+                                t_pedido.camposAtualizar['id_doc_serv_msg'] = documento.get(
+                                    'documento')
+                                t_pedido.updatePedido()
+                                break
                         elif int(documento.get('status')) == StatusDocumento.sdcImportado.value and not pedido['emitir_nota']:
                                 registro_execucao.informativo(
                                     'Atualizando a tabela de pedidos.')

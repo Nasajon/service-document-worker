@@ -392,19 +392,18 @@ class Tpedido:
             if msgAviso is None:
                 msgAviso = IsEmpty
 
-            if (chave_de_acesso != None):
-                sql = """update """ + schema + """.pedidos set
-                chave_de_acesso = %s , 
-                numero_nf = %s , 
-                id_docfis = %s , 
-                status = %s , 
-                mensagem =  %s 
-                where id_pedido= %s """
+            sql = """update """ + schema + """.pedidos set
+            chave_de_acesso = %s , 
+            numero_nf = %s , 
+            id_docfis = %s , 
+            status = %s , 
+            mensagem =  %s 
+            where id_pedido= %s """
 
-                self.conexao.execute(
-                    sql, [chave_de_acesso, numero_nf, iddocfis, novoStatus, msgAviso, idpedido])
-                self.registraLog.mensagem(
-                    idpedido, msgAviso, tipoMsg.serviceDocument, iddocservmsg)
+            self.conexao.execute(
+                sql, [chave_de_acesso, numero_nf, iddocfis, novoStatus, msgAviso, idpedido])
+            self.registraLog.mensagem(
+                idpedido, msgAviso, tipoMsg.serviceDocument, iddocservmsg)
 
     def atualizarTentativa(self, primeira_tentativa, ultima_tentativa, tentativa_adicional=0):
         idpedido = self.pedido['id_pedido']
@@ -662,21 +661,30 @@ class DAO:
         self.xml_serviceDocument = xml_service_document(conexao_banco)
         self.dir_instalacao_erp = dir_instalacao_erp(conexao_banco)
 
-    def obterDocumentosEnviados(self, identidicador):
+    def obterDocumentosEnviados(self, identidicador, situacoes):
+        query_situacao = ''
+        if situacoes.count == 1:
+            query_situacao = situacoes[0]
+        else:
+            for situacao in situacoes:
+                if query_situacao == '':
+                    query_situacao = str(situacao.value)
+                else:
+                    query_situacao = query_situacao + ',' + str(situacao.value)
         # busca todas as mensagens referentes ao documento xml (identificador)
         # que ainda nao foram importadas para o log de execucao do job
         sql = """select df.numero, df.serie, d.* 
             FROM servicedocument.documentos d
             LEFT JOIN ns.df_docfis df ON (df.id = d.id_docfis)
-            where identificador::int = %s
-            and resposta is not null
-            and excluido = FALSE
+            where d.identificador::int = %s
+            and d.status in (""" + query_situacao + """)
+            and d.excluido = FALSE
             AND NOT EXISTS (SELECT le.id_doc_service_msg 
             				FROM servicedocument.log_execucaojob le 
             				WHERE 
             				le.id_doc_service_msg = d.documento
             				)
-            ORDER BY datahora_inclusao DESC"""
+            ORDER BY d.datahora_inclusao DESC"""
 
         return self.conexao.execute_query_to_dict(sql, [identidicador])
 
