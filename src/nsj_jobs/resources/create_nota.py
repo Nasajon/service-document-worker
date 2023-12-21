@@ -178,6 +178,10 @@ def montar_xml_nfe(t_Pedido: Tpedido, arquivo_xml):
     createNodeChild('REFERENCIAEXTERNA',
                     t_Pedido.pedido['num_externo'], doc, nivel_1)
     createNodeChild('CADASTRADOPOR', 'MESTRE', doc, nivel_1)
+    
+    if t_Pedido.pedido['consumidorfinal'] != '':
+        createNodeChild('INDICADORFINALIDADE', t_Pedido.pedido['consumidorfinal'], doc, nivel_1)
+          
 
     # DESTINATARIO
     nivel_1 = createNode('DESTINATARIO', base, doc)
