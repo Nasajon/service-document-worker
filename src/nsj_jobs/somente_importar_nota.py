@@ -95,6 +95,8 @@ class ImportacaoNota(JobCommand):
                                     'chave_emissao')
                                 t_pedido.camposAtualizar['numero_nf'] = documento.get(
                                     'numero')
+                                t_pedido.camposAtualizar['serie_nf'] = documento.get(
+                                    'serie')
                                 t_pedido.camposAtualizar['id_docfis'] = documento.get(
                                     'id_docfis')
                                 t_pedido.camposAtualizar['mensagem'] = documento.get(
@@ -113,6 +115,8 @@ class ImportacaoNota(JobCommand):
                                     'chave_emissao')
                                 t_pedido.camposAtualizar['numero_nf'] = documento.get(
                                     'numero')
+                                t_pedido.camposAtualizar['serie_nf'] = documento.get(
+                                    'serie')
                                 t_pedido.camposAtualizar['id_docfis'] = documento.get(
                                     'id_docfis')
                                 t_pedido.camposAtualizar['mensagem'] = documento.get(

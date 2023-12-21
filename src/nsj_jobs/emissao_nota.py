@@ -41,6 +41,12 @@ class ImportacaoEmissaoNota(JobCommand):
                                StatusDocumento.sdcErroEmissao.value,
                                StatusDocumento.sdcErroConsulta.value,
                                StatusDocumento.sdcRespondidoComFalha.value]
+            documento_situacoes = [StatusDocumento.sdcTransmitido,
+                                    StatusDocumento.sdcImportado,
+                                    StatusDocumento.sdcErroProcessamento,
+                                    StatusDocumento.sdcErroEmissao,
+                                    StatusDocumento.sdcErroConsulta,
+                                    StatusDocumento.sdcRespondidoComFalha]
             # Aberto = 0 | Reemitir = 3 | Cancelamento_Fiscal = 5
             situacoes = [Status.Aberto, Status.Reemitir,
                          Status.Cancelamento_Fiscal]
@@ -56,7 +62,7 @@ class ImportacaoEmissaoNota(JobCommand):
                 var_id_pedido = pedido.get('id_pedido')
                 var_identificador = int(pedido.get('num_pedido'))
                 documentos = self.banco.obterDocumentosEnviados(
-                    var_identificador)
+                    var_identificador, documento_situacoes)
                 registro_execucao.informativo(
                     f'Obtendo os registros do pedido de id: {var_id_pedido} e número: {var_identificador}.')
 
@@ -90,6 +96,8 @@ class ImportacaoEmissaoNota(JobCommand):
                                         'chave_emissao')
                                     t_pedido.camposAtualizar['numero_nf'] = documento.get(
                                         'numero')
+                                    t_pedido.camposAtualizar['serie_nf'] = documento.get(
+                                    'serie')
                                     t_pedido.camposAtualizar['id_docfis'] = documento.get(
                                         'id_docfis')
                                     t_pedido.camposAtualizar['mensagem'] = documento.get(
@@ -98,6 +106,26 @@ class ImportacaoEmissaoNota(JobCommand):
                                         'documento')
                                     t_pedido.updatePedido()
                                     break
+                        elif int(documento.get('status')) == StatusDocumento.sdcImportado.value and not pedido['emitir_nota']:
+                                registro_execucao.informativo(
+                                    'Atualizando a tabela de pedidos.')
+
+                                t_pedido.camposAtualizar['status'] = str(
+                                    Status.Emitido.value)
+                                t_pedido.camposAtualizar['chave_de_acesso'] = documento.get(
+                                    'chave_emissao')
+                                t_pedido.camposAtualizar['numero_nf'] = documento.get(
+                                    'numero')
+                                t_pedido.camposAtualizar['serie_nf'] = documento.get(
+                                    'serie')
+                                t_pedido.camposAtualizar['id_docfis'] = documento.get(
+                                    'id_docfis')
+                                t_pedido.camposAtualizar['mensagem'] = documento.get(
+                                    'mensagem_retorno')
+                                t_pedido.camposAtualizar['id_doc_serv_msg'] = documento.get(
+                                    'documento')
+                                t_pedido.updatePedido()
+                                break
                         elif int(documento.get('status')) in erros_documento:
                             # Se gerou registrou no docfis mas está com erro, rejeita o pedido.
                             if documento.get('id_docfis') is not None:

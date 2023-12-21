@@ -661,7 +661,7 @@ class DAO:
         self.xml_serviceDocument = xml_service_document(conexao_banco)
         self.dir_instalacao_erp = dir_instalacao_erp(conexao_banco)
 
-    def obterDocumentosEnviados(self, identidicador, situacoes):
+    def obterDocumentosEnviados(self, identificador, situacoes):
         query_situacao = ''
         if situacoes.count == 1:
             query_situacao = situacoes[0]
@@ -686,7 +686,7 @@ class DAO:
             				)
             ORDER BY d.datahora_inclusao DESC"""
 
-        return self.conexao.execute_query_to_dict(sql, [identidicador])
+        return self.conexao.execute_query_to_dict(sql, [identificador])
 
     def cfopValido(self, num_cfop: str):
         if num_cfop.strip() == IsEmpty or None:
