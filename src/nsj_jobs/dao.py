@@ -288,9 +288,16 @@ class Tpedido:
                 upper(COD_OPERACAO) AS OPERACAO,
                 DT_EMISSAO,
                 DT_EMISSAO 	AS DATASAIDAENTRADA,
-                COALESCE(DATA_LANCAMENTO, DT_EMISSAO)	AS DATALANCAMENTO,
+                COALESCE(DATA_LANCAMENTO, DT_EMISSAO) AS DATALANCAMENTO,
                 NUM_PEDIDO,
                 NUM_EXTERNO,
+                case when CONSUMIDORFINAL is not null 
+                    then case when CONSUMIDORFINAL 
+                        then '1' 
+                        else '0' 
+                        end 
+                    else '' 
+                    end as  CONSUMIDORFINAL
                 VALOR_PEDIDO,
                 STATUS,
                 OBSERVACAO,
@@ -450,7 +457,7 @@ class Tpedido:
 
         campos = """COALESCE(PROD.CODIGO, ITE.COD_PRODUTO) AS COD_PRODUTO,
                     (CASE WHEN PROD.CODIGO IS NULL THEN 1 ELSE 0 END) AS PROD_NAO_EXISTE,
-                    PROD.ESPECIFICACAO,
+                    (CASE WHEN ITE.ESPECIFICACAO IS NULL THEN PROD.ESPECIFICACAO ELSE ITE.ESPECIFICACAO end) as ESPECIFICACAO,
                     PROD.TIPI, 
                     ITE.QUANTIDADE,
                     (SELECT u.codigo FROM estoque.unidades u
