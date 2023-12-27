@@ -381,6 +381,7 @@ class Tpedido:
         else:
             chave_de_acesso = self.camposAtualizar.get('chave_de_acesso')
             numero_nf = self.camposAtualizar.get('numero_nf')
+            serie_nf = self.camposAtualizar.get('serie_nf')
             iddocfis = self.camposAtualizar.get('id_docfis')
             novoStatus = self.camposAtualizar.get('status')
             msgAviso = self.camposAtualizar.get('mensagem')
@@ -394,14 +395,15 @@ class Tpedido:
 
             sql = """update """ + schema + """.pedidos set
             chave_de_acesso = %s , 
-            numero_nf = %s , 
+            numero_nf = %s ,
+            serie_nf = %s , 
             id_docfis = %s , 
             status = %s , 
             mensagem =  %s 
             where id_pedido= %s """
 
             self.conexao.execute(
-                sql, [chave_de_acesso, numero_nf, iddocfis, novoStatus, msgAviso, idpedido])
+                sql, [chave_de_acesso, numero_nf, serie_nf, iddocfis, novoStatus, msgAviso, idpedido])
             self.registraLog.mensagem(
                 idpedido, msgAviso, tipoMsg.serviceDocument, iddocservmsg)
 
