@@ -297,7 +297,7 @@ class Tpedido:
                         else '0' 
                         end 
                     else '' 
-                    end as  CONSUMIDORFINAL
+                    end as  CONSUMIDORFINAL,
                 VALOR_PEDIDO,
                 STATUS,
                 OBSERVACAO,
