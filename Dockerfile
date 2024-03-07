@@ -7,7 +7,9 @@ RUN python_installer.exe /passive InstallAllUsers=1 PrependPath=1 Include_test=0
 RUN python -m pip install psycopg2
 RUN python -m pip install pytz
 RUN mkdir C:\notas
+RUN mkdir C:\notas_nfce
 RUN mkdir C:\notas\output
+RUN mkdir C:\notas_nfce\output
 RUN tzutil /s "E. South America Standard Time"
 
 ARG dir_instalacao_nasajon_src="erp-instalador/bin/integratto"
