@@ -44,7 +44,7 @@ def montar_xml_nfse(t_Pedido: Tpedido, arquivo_xml):
         'GRUPOEMPRESARIAL', t_Pedido.lstEstabelecimento[0]['grupoempresarial'], doc, base)
     createNodeChild(
         'ESTABELECIMENTO', t_Pedido.lstEstabelecimento[0]['estabelecimento'], doc, base)
-
+    
     # DADOSGERAIS
     nivel_1 = createNode('DADOSGERAIS', base, doc)
     createNodeChild(
@@ -152,6 +152,8 @@ def montar_xml_nfe(t_Pedido: Tpedido, arquivo_xml):
         'ESTABELECIMENTO', t_Pedido.lstEstabelecimento[0]['estabelecimento'], doc, base)
     createNodeChild('VERSAO', '4.00', doc, base)
     createNodeChild('SOMENTE_IMPORTACAO', 1 if not t_Pedido.pedido["emitir_nota"] else 0, doc, base)
+    createNodeChild('OBSERVACAO',
+                    t_Pedido.pedido['observacao'], doc, base)
 
     # DADOSGERAIS
     nivel_1 = createNode('DADOSGERAIS', base, doc)
