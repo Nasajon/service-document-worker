@@ -545,11 +545,11 @@ class Tpedido:
                     PESS.ID				AS ID_CLIENTE, 
                     PESS.PESSOA 		AS CODIGO,
                     PESS.CHAVECNPJ		AS CPF_CNPJ,
-                    PESS.NOMEFANTASIA	AS NOME,
+                    PESS.NOME	        AS NOME,
                     PESS.NOMEFANTASIA,
                     PESS.EMAIL,
                     coalesce(PESS.inscricaoestadual, '') as inscricaoestadual,
-                    (CASE WHEN PESS.inscricaoestadual IS NULL then FALSE ELSE TRUE end) as contribuinteICMS
+                    (CASE WHEN PESS.indicadorinscricaoestadual = 1 then TRUE ELSE FALSE end) as contribuinteICMS
                     FROM NS.PESSOAS   PESS
                     INNER JOIN {}.PEDIDOS PED ON(PED.CNPJ_CLIENTE = PESS.CHAVECNPJ)
                     WHERE PED.ID_PEDIDO = %s 
