@@ -8,12 +8,24 @@ from datetime import date
 from datetime import datetime
 import enum
 
-schema = 'servicedocument'
-IsEmpty = ''
+schema = "servicedocument"
+IsEmpty = ""
 
 
 def quotedString(value: str):
     return "'" + value + "'"
+
+
+def converter_modalidade_numero(modalidade: str):
+    de_para = {
+        "por_conta_do_remetente": 0,
+        "por_conta_do_destinatario": 1,
+        "por_conta_de_terceiros": 2,
+        "sem_frete": 3,
+        "transporte_proprio_remetente": 4,
+        "transporte_proprio_destinatario": 5,
+    }
+    return de_para[modalidade]
 
 
 class tipoMsg(enum.Enum):
@@ -67,12 +79,12 @@ class registra_log:
 
     def mensagem(self, id_pedido: str, msg: str, tipo: tipoMsg, id_docserv_msg=None):
 
-        if (id_docserv_msg != None):
+        if id_docserv_msg != None:
             var_id_doc_msg = str(id_docserv_msg)
         else:
             var_id_doc_msg = None
 
-        if (id_pedido == IsEmpty or id_pedido is None):
+        if id_pedido == IsEmpty or id_pedido is None:
             return None
 
         valor_Tipo = tipo.value
@@ -80,15 +92,13 @@ class registra_log:
         if self.pode_gravar(id_pedido, msg, valor_Tipo):
             sql = "Insert into {}.log_execucaojob(id_pedido, mensagem, tipo, id_doc_service_msg ) Values(%s, %s, %s, %s)"
             sql = sql.format(schema)
-            self.conexao.execute(
-                sql, [id_pedido, msg, tipo.value, var_id_doc_msg])
+            self.conexao.execute(sql, [id_pedido, msg, tipo.value, var_id_doc_msg])
         else:
             sql = """Update {}.log_execucaojob set ultimaexecucao = %s
                     where id_pedido = %s and tipo = %s and mensagem = %s"""
 
             sql = sql.format(schema)
-            self.conexao.execute(
-                sql, [datetime.now(), id_pedido, valor_Tipo, msg])
+            self.conexao.execute(sql, [datetime.now(), id_pedido, valor_Tipo, msg])
 
     def pode_gravar(self, id_pedido: str, msg: str, tipo: int):
 
@@ -98,7 +108,7 @@ class registra_log:
         sql = sql.format(schema)
         qry = self.conexao.execute_query_to_dict(sql, [id_pedido, tipo, msg])
 
-        return (qry[0]['valor'] == 0)
+        return qry[0]["valor"] == 0
 
 
 class xml_service_document:
@@ -113,12 +123,12 @@ class xml_service_document:
                 Limit 1"""
 
         qry = self.conexao.execute_query_to_dict(sql, [valorcampo, aplicacao])
-        if (len(qry) == 0):
+        if len(qry) == 0:
             return None
-        elif (qry[0]['valor'] is None) or (qry[0]['valor'] == IsEmpty):
+        elif (qry[0]["valor"] is None) or (qry[0]["valor"] == IsEmpty):
             return None
         else:
-            return qry[0]['valor']
+            return qry[0]["valor"]
 
 
 class dir_instalacao_erp:
@@ -133,19 +143,19 @@ class dir_instalacao_erp:
                 Limit 1"""
 
         qry = self.conexao.execute_query_to_dict(sql, [])
-        if (len(qry) == 0):
+        if len(qry) == 0:
             return None
-        elif (qry[0]['valor'] is None) or (qry[0]['valor'] == IsEmpty):
+        elif (qry[0]["valor"] is None) or (qry[0]["valor"] == IsEmpty):
             return None
         else:
-            return qry[0]['valor']
+            return qry[0]["valor"]
 
 
 class Tpedidos:
     def __init__(self, conexao_banco: DBAdapter = None):
         self.conexao = conexao_banco
 
-    def obterPedidos(self, situacao: list, processado: bool, limit:bool):
+    def obterPedidos(self, situacao: list, processado: bool, limit: bool):
         strSituacao = IsEmpty
         if situacao.count == 1:
             strSituacao = situacao[0]
@@ -154,9 +164,10 @@ class Tpedidos:
                 if strSituacao == IsEmpty:
                     strSituacao = str(sCod.value)
                 else:
-                    strSituacao = strSituacao + ',' + str(sCod.value)
+                    strSituacao = strSituacao + "," + str(sCod.value)
 
-        sql = """SELECT ID_PEDIDO, NUM_PEDIDO, NUM_EXTERNO, STATUS,
+        sql = (
+            """SELECT ID_PEDIDO, NUM_PEDIDO, NUM_EXTERNO, STATUS,
                 OBSERVACAO, COALESCE( (SELECT o.operacao FROM ESTOQUE.operacoes o
                 WHERE lower(o.codigo) = lower(ped.cod_operacao) 
                 )::VARCHAR(30), '') AS ID_OPERACAO,
@@ -168,13 +179,17 @@ class Tpedidos:
                 LOCALESTOQUE,
                 CFOP,
                 TENTATIVAS_ADICIONAIS, 
-                PRIMEIRA_TENTATIVA                                 
+                PRIMEIRA_TENTATIVA                             
                 FROM {}.PEDIDOS  PED
-                WHERE PED.STATUS in (""" + strSituacao + """) and
+                WHERE PED.STATUS in ("""
+            + strSituacao
+            + """) and
                 PED.Processado = %s
                 AND PED.EMITIR = TRUE
-                ORDER BY PED.data_hora_criacao""" + (" LIMIT 10" if limit else '')
-        
+                ORDER BY PED.data_hora_criacao"""
+            + (" LIMIT 10" if limit else "")
+        )
+
         sql = sql.format(schema)
         return self.conexao.execute_query_to_dict(sql, [processado])
 
@@ -187,16 +202,20 @@ class Tpedidos:
                 if strSituacao == IsEmpty:
                     strSituacao = str(sCod.value)
                 else:
-                    strSituacao = strSituacao + ',' + str(sCod.value)
+                    strSituacao = strSituacao + "," + str(sCod.value)
 
-        sql = """SELECT ID_PEDIDO, NUM_PEDIDO, NUM_EXTERNO, STATUS, TENTATIVAS_ADICIONAIS, PRIMEIRA_TENTATIVA, ULTIMA_TENTATIVA, datahora_processamento, emitir_nota
+        sql = (
+            """SELECT ID_PEDIDO, NUM_PEDIDO, NUM_EXTERNO, STATUS, TENTATIVAS_ADICIONAIS, PRIMEIRA_TENTATIVA, ULTIMA_TENTATIVA, datahora_processamento, emitir_nota
                 FROM {0}.PEDIDOS  PED
-                WHERE PED.STATUS in (""" + strSituacao + """) and
+                WHERE PED.STATUS in ("""
+            + strSituacao
+            + """) and
                 PED.Processado = True
                 AND PED.EMITIR = True
                 And Ped.chave_de_acesso Is null
                 ORDER BY PED.data_hora_criacao"""
-        
+        )
+
         sql = sql.format(schema)
         return self.conexao.execute_query_to_dict(sql)
 
@@ -213,51 +232,55 @@ class Tpedido:
         self.endEntrega = None
         self.endPrestacao = None
         self.lstProdutos = None
+        self.lstVolumes = None
         self.lstServicos = None
         self.lstFormaPagamento = None
 
         self.camposAtualizar = {
-            'chave_de_acesso': None,
-            'numero_nf': None,
-            'id_docfis': None,
-            'status': None,
-            'mensagem': None,
-            'id_doc_serv_msg': None}
+            "chave_de_acesso": None,
+            "numero_nf": None,
+            "id_docfis": None,
+            "status": None,
+            "mensagem": None,
+            "id_doc_serv_msg": None,
+        }
 
     def id_pedido(self):
-        if (self.pedido['id_pedido'] == IsEmpty or self.pedido['id_pedido'] is None):
+        if self.pedido["id_pedido"] == IsEmpty or self.pedido["id_pedido"] is None:
             return IsEmpty
         else:
-            return str(self.pedido['id_pedido'])
+            return str(self.pedido["id_pedido"])
 
     def id_cliente(self):
-        if self.lstCliente['id_cliente'] is None:
+        if self.lstCliente["id_cliente"] is None:
             self.lstCliente = self.obterCliente
 
-        return str(self.lstCliente['id_cliente'])
+        return str(self.lstCliente["id_cliente"])
 
     def id_estabecimento(self):
-        if self.lstEstabelecimento['id_estabelecimento'] is None:
+        if self.lstEstabelecimento["id_estabelecimento"] is None:
             self.lstEstabelecimento = self.obterEstabelecimento
 
-        return str(self.lstEstabelecimento['id_estabelecimento'])
+        return str(self.lstEstabelecimento["id_estabelecimento"])
 
     def status(self):
         if self.id_pedido == IsEmpty:
             return -1
         else:
-            return int(self.pedido['status'])
+            return int(self.pedido["status"])
 
     def num_pedido(self):
-        if (self.pedido['num_pedido'] is None) or (self.pedido['num_pedido'] == IsEmpty):
+        if (self.pedido["num_pedido"] is None) or (
+            self.pedido["num_pedido"] == IsEmpty
+        ):
             return None
         else:
-            return self.pedido['num_pedido']
+            return self.pedido["num_pedido"]
 
     def NumPedidoFormatado(self):
         numPedido = self.num_pedido
         if numPedido != None:
-            return '%030d' % (numPedido,)
+            return "%030d" % (numPedido,)
         else:
             return None
 
@@ -278,7 +301,7 @@ class Tpedido:
             self.obterPedidoId(id)
 
     def obterPedidoId(self, id_pedido):
-        if (id_pedido == IsEmpty or id_pedido is None):
+        if id_pedido == IsEmpty or id_pedido is None:
             return None
 
         sql = """SELECT 
@@ -315,59 +338,63 @@ class Tpedido:
                 TENTATIVAS_ADICIONAIS, 
                 PRIMEIRA_TENTATIVA,
                 TIPO_NOTA,
-                EMITIR_NOTA                                       
+                EMITIR_NOTA,
+                MODALIDADE_FRETE                                       
                 FROM {}.PEDIDOS PED WHERE PED.id_pedido = %s"""
 
         sql = sql.format(schema)
         pedidos = self.conexao.execute_query_to_dict(sql, [id_pedido])
-        if (len(pedidos) == 0):
+        if len(pedidos) == 0:
             return None
         else:
             self.obterDadosPedido(id_pedido)
             self.pedido = pedidos[0]
-            if self.pedido.get('tipo_nota') == 'NFSE':
+            if self.pedido.get("tipo_nota") == "NFSE":
                 self.ajustarFormaPagamentoNFSE()
 
-
     def obterDadosPedido(self, idpedido: str):
-        
-        self.lstEstabelecimento = self.obterEstabelecimento(idpedido)
-        self.lstCliente         = self.obterCliente(idpedido)
 
-        if (len(self.lstCliente) != 0):
-            var_id_cliente = str(self.lstCliente[0]['id_cliente'])
+        self.lstEstabelecimento = self.obterEstabelecimento(idpedido)
+        self.lstCliente = self.obterCliente(idpedido)
+
+        if len(self.lstCliente) != 0:
+            var_id_cliente = str(self.lstCliente[0]["id_cliente"])
             self.lstEndCliente = self.obterEnderecoCliente(var_id_cliente)
-        
+
         self.endEntrega = self.obterEnderecoEntrega(idpedido)
         self.endPrestacao = self.obterEnderecoPrestacao(idpedido)
         self.lstProdutos = self.obterProdutos(idpedido)
+        self.lstVolumes = self.obterVolumes(idpedido)
         self.lstServicos = self.obterServicos(idpedido)
         self.lstFormaPagamento = self.obterFormasPagamentos(idpedido)
-    
+
     def ajustarFormaPagamentoNFSE(self):
         pagamentos = copy.deepcopy(self.lstFormaPagamento)
         novaLista = {}
         for pagamento in pagamentos:
-            if not pagamento.get('tipoformapagamento') in novaLista.keys():
-                novaLista[pagamento.get('tipoformapagamento')] = {
-                    "tipoformapagamento": pagamento.get('tipoformapagamento'),
+            if not pagamento.get("tipoformapagamento") in novaLista.keys():
+                novaLista[pagamento.get("tipoformapagamento")] = {
+                    "tipoformapagamento": pagamento.get("tipoformapagamento"),
                     "parcelas": [],
-                    "valor_total": Decimal('00')
-                    }
-            novaLista[pagamento.get('tipoformapagamento')]["parcelas"].append({
-                "numero": pagamento.get('numero'),
-                "vencimento": pagamento.get('dt_vencimento'),
-                "valor": pagamento.get('valor_parcela')
-            })
-            novaLista[pagamento.get('tipoformapagamento')]["valor_total"] += pagamento.get('valor_parcela')
-        
+                    "valor_total": Decimal("00"),
+                }
+            novaLista[pagamento.get("tipoformapagamento")]["parcelas"].append(
+                {
+                    "numero": pagamento.get("numero"),
+                    "vencimento": pagamento.get("dt_vencimento"),
+                    "valor": pagamento.get("valor_parcela"),
+                }
+            )
+            novaLista[pagamento.get("tipoformapagamento")][
+                "valor_total"
+            ] += pagamento.get("valor_parcela")
+
         self.lstFormaPagamento = [novaLista[i] for i in novaLista.keys()]
 
-
     def updateSituacao(self, status_value: int):
-        idpedido = self.pedido['id_pedido']
+        idpedido = self.pedido["id_pedido"]
         if idpedido != IsEmpty:
-            sql = 'update {}.pedidos set status = %s where id_pedido = %s'
+            sql = "update {}.pedidos set status = %s where id_pedido = %s"
             sql = sql.format(schema)
             self.conexao.execute(sql, [status_value, idpedido])
 
@@ -382,17 +409,17 @@ class Tpedido:
             self.conexao.execute(sql, [idPedido])
 
     def updatePedido(self):
-        idpedido = self.pedido['id_pedido']
-        if (idpedido == IsEmpty or idpedido is None):
+        idpedido = self.pedido["id_pedido"]
+        if idpedido == IsEmpty or idpedido is None:
             return
         else:
-            chave_de_acesso = self.camposAtualizar.get('chave_de_acesso')
-            numero_nf = self.camposAtualizar.get('numero_nf')
-            serie_nf = self.camposAtualizar.get('serie_nf')
-            iddocfis = self.camposAtualizar.get('id_docfis')
-            novoStatus = self.camposAtualizar.get('status')
-            msgAviso = self.camposAtualizar.get('mensagem')
-            iddocservmsg = self.camposAtualizar.get('id_doc_serv_msg')
+            chave_de_acesso = self.camposAtualizar.get("chave_de_acesso")
+            numero_nf = self.camposAtualizar.get("numero_nf")
+            serie_nf = self.camposAtualizar.get("serie_nf")
+            iddocfis = self.camposAtualizar.get("id_docfis")
+            novoStatus = self.camposAtualizar.get("status")
+            msgAviso = self.camposAtualizar.get("mensagem")
+            iddocservmsg = self.camposAtualizar.get("id_doc_serv_msg")
 
             if novoStatus is None:
                 return
@@ -400,7 +427,10 @@ class Tpedido:
             if msgAviso is None:
                 msgAviso = IsEmpty
 
-            sql = """update """ + schema + """.pedidos set
+            sql = (
+                """update """
+                + schema
+                + """.pedidos set
             chave_de_acesso = %s , 
             numero_nf = %s ,
             serie_nf = %s , 
@@ -408,15 +438,29 @@ class Tpedido:
             status = %s , 
             mensagem =  %s 
             where id_pedido= %s """
+            )
 
             self.conexao.execute(
-                sql, [chave_de_acesso, numero_nf, serie_nf, iddocfis, novoStatus, msgAviso, idpedido])
+                sql,
+                [
+                    chave_de_acesso,
+                    numero_nf,
+                    serie_nf,
+                    iddocfis,
+                    novoStatus,
+                    msgAviso,
+                    idpedido,
+                ],
+            )
             self.registraLog.mensagem(
-                idpedido, msgAviso, tipoMsg.serviceDocument, iddocservmsg)
+                idpedido, msgAviso, tipoMsg.serviceDocument, iddocservmsg
+            )
 
-    def atualizarTentativa(self, primeira_tentativa, ultima_tentativa, tentativa_adicional=0):
-        idpedido = self.pedido['id_pedido']
-        if (idpedido == IsEmpty or idpedido is None):
+    def atualizarTentativa(
+        self, primeira_tentativa, ultima_tentativa, tentativa_adicional=0
+    ):
+        idpedido = self.pedido["id_pedido"]
+        if idpedido == IsEmpty or idpedido is None:
             return
         else:
             novoStatus = Status.Reemitir.value
@@ -427,34 +471,51 @@ class Tpedido:
                 processado = False
                 msgAviso = f"Gerando XML novamente de forma automática para a {tentativa_adicional+1}º tentativa de emissão."
 
-            sql = """update """ + schema + """.pedidos set
+            sql = (
+                """update """
+                + schema
+                + """.pedidos set
                 status = %s ,
                 tentativas_adicionais = %s ,
                 primeira_tentativa = %s ,
                 ultima_tentativa = %s ,
                 processado = %s
                 where id_pedido = %s """
+            )
 
-            self.conexao.execute(sql, [novoStatus, tentativa_adicional,
-                                 primeira_tentativa, ultima_tentativa, processado, idpedido])
+            self.conexao.execute(
+                sql,
+                [
+                    novoStatus,
+                    tentativa_adicional,
+                    primeira_tentativa,
+                    ultima_tentativa,
+                    processado,
+                    idpedido,
+                ],
+            )
             self.registraLog.mensagem(idpedido, msgAviso, tipoMsg.sucesso)
 
     def registrarPrimeiraTentativaParaReemissao(self):
-        idpedido = self.pedido['id_pedido']
-        if (idpedido == IsEmpty or idpedido is None):
+        idpedido = self.pedido["id_pedido"]
+        if idpedido == IsEmpty or idpedido is None:
             return
         else:
             novoStatus = Status.Reemitir.value
 
-            sql = """update """ + schema + """.pedidos set
+            sql = (
+                """update """
+                + schema
+                + """.pedidos set
                 status = %s ,
                 primeira_tentativa = %s
                 where id_pedido = %s """
+            )
 
             self.conexao.execute(sql, [novoStatus, datetime.now(), idpedido])
 
     def obterProdutos(self, id_pedido):
-        if (id_pedido == IsEmpty or id_pedido is None):
+        if id_pedido == IsEmpty or id_pedido is None:
             return None
 
         campos = """COALESCE(PROD.CODIGO, ITE.COD_PRODUTO) AS COD_PRODUTO,
@@ -477,33 +538,40 @@ class Tpedido:
                     0.00	AS VALOROUTRASDESPESAS,
                     ITE.valor_desconto AS VALORDESCONTO,"""
 
-        sql = """SELECT
-              """ + campos + """
+        sql = (
+            """SELECT
+              """
+            + campos
+            + """
                     0 as SEM_SALDO, 
                     '' AS MENSAGEM_ERRO
                     FROM {}.ITENSPEDIDOS ITE
                     LEFT JOIN ESTOQUE.PRODUTOS PROD ON ( UPPER(PROD.CODIGO) = UPPER(ITE.COD_PRODUTO) or  UPPER(PROD.codigodebarras) = UPPER(ITE.COD_PRODUTO) )            
                     WHERE ITE.ID_PEDIDO = %s and not ite.generico
                     ORDER BY ITE.COD_PRODUTO"""
+        )
 
         sql = sql.format(schema)
         lstPedidos = self.conexao.execute_query_to_dict(sql, [id_pedido])
 
-        sql = """SELECT 
-              """ + campos + """
+        sql = (
+            """SELECT 
+              """
+            + campos
+            + """
                     (CASE WHEN ITE.sem_saldo THEN 1 ELSE 0 END) as sem_saldo, 
                     coalesce(ITE.MENSAGEM_ERRO, '') as mensagem_erro
                     FROM estoque.recupera_produtos_especificos_de_produto_generico(%s) ITE
                     LEFT JOIN ESTOQUE.PRODUTOS PROD ON ( UPPER(PROD.CODIGO) = UPPER(ITE.COD_PRODUTO))
                     ORDER BY ITE.COD_PRODUTO"""
+        )
 
-        lstPedidosGenericos = self.conexao.execute_query_to_dict(sql, [
-                                                                 id_pedido])
+        lstPedidosGenericos = self.conexao.execute_query_to_dict(sql, [id_pedido])
 
         return lstPedidos + lstPedidosGenericos
-    
+
     def obterServicos(self, id_pedido):
-        if (id_pedido == IsEmpty or id_pedido is None):
+        if id_pedido == IsEmpty or id_pedido is None:
             return None
 
         sql = """SELECT
@@ -520,6 +588,26 @@ class Tpedido:
 
         return lstServicos
 
+    def obterVolumes(self, id_pedido):
+        if id_pedido == IsEmpty or id_pedido is None:
+            return None
+
+        sql = """SELECT
+                NUMERACAO,
+                MARCA,
+                ESPECIE,
+                QUANTIDADE,
+                PESO_BRUTO,
+                PESO_LIQUIDO
+                FROM {}.VOLUMES_PEDIDOS
+                WHERE ID_PEDIDO = %s
+                ORDER BY NUMERACAO"""
+
+        sql = sql.format(schema)
+        lstVolumes = self.conexao.execute_query_to_dict(sql, [id_pedido])
+
+        return lstVolumes
+
     def obterEstabelecimento(self, id_pedido):
         sql = """SELECT 
                     EMP.EMPRESA     AS ID_EMPRESA,
@@ -535,7 +623,7 @@ class Tpedido:
 
         sql = sql.format(schema)
         qry = self.conexao.execute_query_to_dict(sql, [id_pedido])
-        if (len(qry) == 0):
+        if len(qry) == 0:
             return None
         else:
             return qry
@@ -560,7 +648,7 @@ class Tpedido:
         return qry
 
     def obterEnderecoCliente(self, id_cliente):
-        if (id_cliente == IsEmpty or None):
+        if id_cliente == IsEmpty or None:
             return None
 
         sql = """SELECT 
@@ -582,13 +670,13 @@ class Tpedido:
             LIMIT 1"""
 
         qry = self.conexao.execute_query_to_dict(sql, [id_cliente])
-        if (len(qry) == 0):
+        if len(qry) == 0:
             return None
         else:
             return qry
 
     def obterEnderecoPrestacao(self, id_pedido):
-        if (id_pedido == IsEmpty or None):
+        if id_pedido == IsEmpty or None:
             return None
 
         sql = """SELECT 
@@ -611,13 +699,13 @@ class Tpedido:
             LIMIT 1"""
 
         qry = self.conexao.execute_query_to_dict(sql, [id_pedido])
-        if (len(qry) == 0):
+        if len(qry) == 0:
             return None
         else:
             return qry[0]
 
     def obterEnderecoEntrega(self, id_pedido):
-        if (id_pedido == IsEmpty or None):
+        if id_pedido == IsEmpty or None:
             return None
 
         sql = """SELECT 
@@ -637,7 +725,7 @@ class Tpedido:
             LIMIT 1"""
 
         qry = self.conexao.execute_query_to_dict(sql, [id_pedido])
-        if (len(qry) == 0):
+        if len(qry) == 0:
             return None
         else:
             return qry[0]
@@ -671,22 +759,25 @@ class DAO:
         self.dir_instalacao_erp = dir_instalacao_erp(conexao_banco)
 
     def obterDocumentosEnviados(self, identificador, situacoes):
-        query_situacao = ''
+        query_situacao = ""
         if situacoes.count == 1:
             query_situacao = situacoes[0]
         else:
             for situacao in situacoes:
-                if query_situacao == '':
+                if query_situacao == "":
                     query_situacao = str(situacao.value)
                 else:
-                    query_situacao = query_situacao + ',' + str(situacao.value)
+                    query_situacao = query_situacao + "," + str(situacao.value)
         # busca todas as mensagens referentes ao documento xml (identificador)
         # que ainda nao foram importadas para o log de execucao do job
-        sql = """select df.numero, df.serie, d.* 
+        sql = (
+            """select df.numero, df.serie, d.* 
             FROM servicedocument.documentos d
             LEFT JOIN ns.df_docfis df ON (df.id = d.id_docfis)
             where d.identificador::int = %s
-            and d.status in (""" + query_situacao + """)
+            and d.status in ("""
+            + query_situacao
+            + """)
             and d.excluido = FALSE
             AND NOT EXISTS (SELECT le.id_doc_service_msg 
             				FROM servicedocument.log_execucaojob le 
@@ -694,6 +785,7 @@ class DAO:
             				le.id_doc_service_msg = d.documento
             				)
             ORDER BY d.datahora_inclusao DESC"""
+        )
 
         return self.conexao.execute_query_to_dict(sql, [identificador])
 
@@ -702,36 +794,40 @@ class DAO:
             return False
 
         sql = """SELECT 1 AS CFOP_OK FROM ns.cfop c 
-                WHERE c.cfop = """ + quotedString(num_cfop)
+                WHERE c.cfop = """ + quotedString(
+            num_cfop
+        )
 
-       # sql = """SELECT 1 AS CFOP_OK
-       #         FROM ns.cfop c
-       #         WHERE
-       #         c.cfop LIKE '51%' AND
-       #         NOT c.cfop LIKE '%0'
-       #         AND c.tipo = 0
-       #         AND c.cfop = """ + quotedString(num_cfop)
+        # sql = """SELECT 1 AS CFOP_OK
+        #         FROM ns.cfop c
+        #         WHERE
+        #         c.cfop LIKE '51%' AND
+        #         NOT c.cfop LIKE '%0'
+        #         AND c.tipo = 0
+        #         AND c.cfop = """ + quotedString(num_cfop)
 
         qry = self.conexao.execute_query_to_dict(sql)
-        if (len(qry) == 0):
+        if len(qry) == 0:
             return False
         else:
-            return (qry[0]['cfop_ok'] != None) and (qry[0]['cfop_ok'] == 1)
+            return (qry[0]["cfop_ok"] != None) and (qry[0]["cfop_ok"] == 1)
 
     def localEstoqueValido(self, codigo: str = None, idEstabecimento: str = None):
         if (codigo != IsEmpty) and (idEstabecimento != IsEmpty):
-            sql = 'SELECT 1 AS CODIGO FROM estoque.locaisdeestoques e WHERE e.codigo = %s and e.estabelecimento = %s Limit 1'
-            qry = self.conexao.execute_query_to_dict(
-                sql, [codigo, idEstabecimento])
-            if (len(qry) == 0 or None):
+            sql = "SELECT 1 AS CODIGO FROM estoque.locaisdeestoques e WHERE e.codigo = %s and e.estabelecimento = %s Limit 1"
+            qry = self.conexao.execute_query_to_dict(sql, [codigo, idEstabecimento])
+            if len(qry) == 0 or None:
                 return False
             else:
-                return (qry[0]['codigo'] != None) and (qry[0]['codigo'] == 1)
+                return (qry[0]["codigo"] != None) and (qry[0]["codigo"] == 1)
         else:
             return False
 
-    def ObterProximoNumNotaFiscal(self, a_tipodoc: str, a_serie: str, a_estabelecimento: str):
-        sql = 'Select * from getproximonumeroseriedoc({1}, {2}, {3})'
+    def ObterProximoNumNotaFiscal(
+        self, a_tipodoc: str, a_serie: str, a_estabelecimento: str
+    ):
+        sql = "Select * from getproximonumeroseriedoc({1}, {2}, {3})"
         qry = self.conexao.execute_query_to_dict(
-            sql, [a_tipodoc, a_serie, a_estabelecimento])
-        return qry['getproximonumeroseriedoc']
+            sql, [a_tipodoc, a_serie, a_estabelecimento]
+        )
+        return qry["getproximonumeroseriedoc"]
