@@ -263,23 +263,26 @@ def montar_xml_nfe(t_Pedido: Tpedido, arquivo_xml):
 
     # VOLUMES
     if t_Pedido.pedido["modalidade_frete"]:
-        for produto in t_Pedido.lstVolumes:
-            nivel_1 = createNode("TRANSPORTE", base, doc)
+        nivel_1 = createNode("TRANSPORTE", base, doc)
 
-            createNodeChild(
-                "MODALIDADE",
-                converter_modalidade_numero(t_Pedido.pedido["modalidade_frete"]),
-                doc,
-                nivel_1,
-            )
-            for volume in t_Pedido.lstVolumes:
-                nivel_2 = createNode("VOLUME", nivel_1, doc)
-                createNodeChild("NUMERACAO", volume.get("numeracao"), doc, nivel_2)
-                createNodeChild("MARCA", volume.get("marca"), doc, nivel_2)
-                createNodeChild("ESPECIE", volume.get("especie"), doc, nivel_2)
-                createNodeChild("QUANTIDADE", volume.get("quantidade"), doc, nivel_2)
-                createNodeChild("PESOBRUTO", volume.get("peso_bruto"), doc, nivel_2)
-                createNodeChild("PESOLIQUIDO", volume.get("peso_liquido"), doc, nivel_2)
+        createNodeChild(
+            "MODALIDADE",
+            converter_modalidade_numero(t_Pedido.pedido["modalidade_frete"]),
+            doc,
+            nivel_1,
+        )
+        for volume in t_Pedido.lstVolumes:
+            nivel_2 = createNode("VOLUME", nivel_1, doc)
+            createNodeChild("NUMERACAO", volume.get("numeracao"), doc, nivel_2)
+            createNodeChild("MARCA", volume.get("marca"), doc, nivel_2)
+            createNodeChild("ESPECIE", volume.get("especie"), doc, nivel_2)
+            createNodeChild("QUANTIDADE", volume.get("quantidade"), doc, nivel_2)
+            createNodeChild("PESOBRUTO", volume.get("peso_bruto"), doc, nivel_2)
+            createNodeChild("PESOLIQUIDO", volume.get("peso_liquido"), doc, nivel_2)
+
+        if t_Pedido.pedido["transportadora"]:
+            nivel_2 = createNode("TRANSPORTADORA", nivel_1, doc)
+            createNodeChild("CPF_CNPJ", t_Pedido.pedido["transportadora"], doc, nivel_2)
 
     nivel_1 = createNode("INFORMACOESADICIONAIS", base, doc)
     createNodeChild("INFORMACOESMANUAIS", t_Pedido.pedido["observacao"], doc, nivel_1)

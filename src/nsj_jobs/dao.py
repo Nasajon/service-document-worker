@@ -339,7 +339,8 @@ class Tpedido:
                 PRIMEIRA_TENTATIVA,
                 TIPO_NOTA,
                 EMITIR_NOTA,
-                MODALIDADE_FRETE                                       
+                MODALIDADE_FRETE,
+                TRANSPORTADORA                                       
                 FROM {}.PEDIDOS PED WHERE PED.id_pedido = %s"""
 
         sql = sql.format(schema)
