@@ -315,7 +315,8 @@ class Tpedido:
                 TENTATIVAS_ADICIONAIS, 
                 PRIMEIRA_TENTATIVA,
                 TIPO_NOTA,
-                EMITIR_NOTA                                       
+                EMITIR_NOTA,
+                case when VENDAPRESENCIAL then '1' else '' end as VENDAPRESENCIAL                                       
                 FROM {}.PEDIDOS PED WHERE PED.id_pedido = %s"""
 
         sql = sql.format(schema)

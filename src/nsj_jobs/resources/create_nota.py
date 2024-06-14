@@ -53,6 +53,7 @@ def montar_xml_nfse(t_Pedido: Tpedido, arquivo_xml):
         'SUBSERIE', t_Pedido.pedido['subserie'], doc, nivel_1)
     createNodeChild(
         'DATAEMISSAO', t_Pedido.pedido['datasaidaentrada'], doc, nivel_1)
+    createNodeChild('MODOCOMPRA', t_Pedido.pedido['vendapresencial'], doc, nivel_1)
     createNodeChild('DATASAIDAENTRADA',
                     t_Pedido.pedido['datasaidaentrada'], doc, nivel_1)
     createNodeChild('DATALANCAMENTO',
@@ -70,6 +71,7 @@ def montar_xml_nfse(t_Pedido: Tpedido, arquivo_xml):
     createNodeChild(
         'NOMEFANTASIA', t_Pedido.lstCliente[0]['nomefantasia'], doc, nivel_1)
     createNodeChild('EMAIL', t_Pedido.lstCliente[0]['email'], doc, nivel_1)
+    
 
     # ENDERECO
     nivel_2 = createNode('ENDERECO', nivel_1, doc)
