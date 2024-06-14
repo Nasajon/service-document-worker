@@ -165,6 +165,7 @@ def montar_xml_nfe(t_Pedido: Tpedido, arquivo_xml):
     createNodeChild("LOCALESTOQUE", t_Pedido.pedido["localestoque"], doc, nivel_1)
     createNodeChild("FORMAPAGAMENTO", t_Pedido.pedido["formapagamento"], doc, nivel_1)
     createNodeChild("REFERENCIAEXTERNA", t_Pedido.pedido["num_externo"], doc, nivel_1)
+    createNodeChild("MODOCOMPRA", t_Pedido.pedido["vendapresencial"], doc, nivel_1)
     createNodeChild("CADASTRADOPOR", "MESTRE", doc, nivel_1)
 
     if t_Pedido.pedido["consumidorfinal"] != "":

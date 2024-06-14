@@ -340,7 +340,8 @@ class Tpedido:
                 TIPO_NOTA,
                 EMITIR_NOTA,
                 MODALIDADE_FRETE,
-                TRANSPORTADORA                                       
+                TRANSPORTADORA,
+                case when VENDAPRESENCIAL then '1' else '' end as VENDAPRESENCIAL                                       
                 FROM {}.PEDIDOS PED WHERE PED.id_pedido = %s"""
 
         sql = sql.format(schema)
