@@ -543,11 +543,11 @@ class Tpedido:
         sql = (
             """
             with produtos as (
-	        select ite.id_item_pedido,  prod.*, (prod.codigodebarras = ite.cod_produto) as cod_barra_igual, ROW_NUMBER() OVER( partition by id_item_pedido    ORDER BY ite.id_item_pedido, (prod.codigodebarras = ite.cod_produto) desc) rec_num
+	        select ite.id_item_pedido,  prod.*, (coalesce(prod.codigodebarras,'') = ite.cod_produto) as cod_barra_igual, ROW_NUMBER() OVER( partition by id_item_pedido    ORDER BY ite.id_item_pedido, (coalesce(prod.codigodebarras,'') = ite.cod_produto) desc) rec_num
             FROM {}.ITENSPEDIDOS ITE
             LEFT JOIN ESTOQUE.PRODUTOS PROD ON ( UPPER(PROD.CODIGO) = UPPER(ITE.COD_PRODUTO) or  UPPER(PROD.codigodebarras) = UPPER(ITE.COD_PRODUTO) )
             WHERE ITE.ID_PEDIDO = %s and not ite.generico
-            order by ite.id_item_pedido,  (prod.codigodebarras = ite.cod_produto) desc
+            order by ite.id_item_pedido,  (coalesce(prod.codigodebarras,'') = ite.cod_produto) desc
             )
             SELECT
               """
