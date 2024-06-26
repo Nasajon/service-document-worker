@@ -170,7 +170,7 @@ def montar_xml_nfe(t_Pedido: Tpedido, arquivo_xml):
 
     if t_Pedido.pedido["consumidorfinal"] != "":
         createNodeChild(
-            "indicadorFinalidade", t_Pedido.pedido["consumidorfinal"], doc, nivel_1
+            "INDICADORFINALIDADE", t_Pedido.pedido["consumidorfinal"], doc, nivel_1
         )
 
     # DESTINATARIO
