@@ -317,7 +317,7 @@ class Tpedido:
                 case when CONSUMIDORFINAL is not null 
                     then case when CONSUMIDORFINAL 
                         then '1' 
-                        else '0' 
+                        else '23' 
                         end 
                     else '' 
                     end as  CONSUMIDORFINAL,
