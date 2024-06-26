@@ -317,7 +317,7 @@ class Tpedido:
                 case when CONSUMIDORFINAL is not null 
                     then case when CONSUMIDORFINAL 
                         then '1' 
-                        else '0' 
+                        else '23' 
                         end 
                     else '' 
                     end as  CONSUMIDORFINAL,
@@ -541,14 +541,22 @@ class Tpedido:
                     ITE.valor_desconto AS VALORDESCONTO,"""
 
         sql = (
-            """SELECT
+            """
+            with produtos as (
+	        select ite.id_item_pedido,  prod.*, (coalesce(prod.codigodebarras,'') = ite.cod_produto) as cod_barra_igual, ROW_NUMBER() OVER( partition by id_item_pedido    ORDER BY ite.id_item_pedido, (coalesce(prod.codigodebarras,'') = ite.cod_produto) desc) rec_num
+            FROM {}.ITENSPEDIDOS ITE
+            LEFT JOIN ESTOQUE.PRODUTOS PROD ON ( UPPER(PROD.CODIGO) = UPPER(ITE.COD_PRODUTO) or  UPPER(PROD.codigodebarras) = UPPER(ITE.COD_PRODUTO) )
+            WHERE ITE.ID_PEDIDO = %s and not ite.generico
+            order by ite.id_item_pedido,  (coalesce(prod.codigodebarras,'') = ite.cod_produto) desc
+            )
+            SELECT
               """
             + campos
             + """
                     0 as SEM_SALDO, 
                     '' AS MENSAGEM_ERRO
                     FROM {}.ITENSPEDIDOS ITE
-                    LEFT JOIN ESTOQUE.PRODUTOS PROD ON ( UPPER(PROD.CODIGO) = UPPER(ITE.COD_PRODUTO) or  UPPER(PROD.codigodebarras) = UPPER(ITE.COD_PRODUTO) )            
+                    LEFT JOIN produtos PROD on ite.id_item_pedido = prod.id_item_pedido and prod.rec_num = 1         
                     WHERE ITE.ID_PEDIDO = %s and not ite.generico
                     ORDER BY ITE.COD_PRODUTO"""
         )
