@@ -669,6 +669,7 @@ class Tpedido:
                 NULL               	AS REFERENCIA
             FROM NS.ENDERECOS E
             WHERE E.ID_PESSOA = %s
+            AND E.TIPOENDERECO = 0
             LIMIT 1"""
 
         qry = self.conexao.execute_query_to_dict(sql, [id_cliente])

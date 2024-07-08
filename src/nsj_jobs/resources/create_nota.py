@@ -289,9 +289,9 @@ def montar_xml_nfe(t_Pedido: Tpedido, arquivo_xml):
     createNodeChild("INFORMACOESMANUAIS", t_Pedido.pedido["observacao"], doc, nivel_1)
 
     # FORMA DE PAGAMENTO
-    nivel_1 = createNode("COBRANCA", base, doc)
     parc_num = 1
     for pagamento in t_Pedido.lstFormaPagamento:
+        nivel_1 = createNode("COBRANCA", base, doc)
         strNumParc = formataNumZeros(3, parc_num)
         nivel_2 = createNode("DUPLICATA", nivel_1, doc)
         createNodeChild(
