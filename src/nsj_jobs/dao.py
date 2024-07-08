@@ -538,7 +538,7 @@ class Tpedido:
 	        select ite.id_item_pedido,  prod.*, (coalesce(prod.codigodebarras,'') = ite.cod_produto) as cod_barra_igual, ROW_NUMBER() OVER( partition by id_item_pedido    ORDER BY ite.id_item_pedido, (coalesce(prod.codigodebarras,'') = ite.cod_produto) desc) rec_num
             FROM servicedocument.ITENSPEDIDOS ITE
             LEFT JOIN ESTOQUE.PRODUTOS PROD ON ( UPPER(PROD.CODIGO) = UPPER(ITE.COD_PRODUTO) or  UPPER(PROD.codigodebarras) = UPPER(ITE.COD_PRODUTO) )
-            WHERE ITE.ID_PEDIDO = %s and not ite.generico
+            WHERE ITE.ID_PEDIDO = %s and not ite.generico and prod.codigo not ilike '%USO_CONSUMO%'
             order by ite.id_item_pedido,  (coalesce(prod.codigodebarras,'') = ite.cod_produto) desc
             )
             SELECT
