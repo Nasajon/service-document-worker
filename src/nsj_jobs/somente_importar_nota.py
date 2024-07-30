@@ -392,10 +392,10 @@ class ImportacaoNota(JobCommand):
                     if (var_loc_estoq != '') and (var_loc_estoq is not None):
                         if not self.banco.localEstoqueValido(var_loc_estoq, var_id_Estab):
                             erroLista.append(
-                                'Valor inválido informado para o campo [LOCALESTOQUE] no item.')
+                                'Valor inválido informado para o campo [LOCALESTOQUE] no item')
                     else:
                         erroLista.append(
-                            'Valor não foi informado para o campo [LOCALESTOQUE] no item.')
+                            'Valor não foi informado para o campo [LOCALESTOQUE] no item')
 
                     if (produto.get('documentoreferenciado_chave') is not None) and (produto.get('documentoreferenciado_chave') != ''):
                         if (len(produto.get('documentoreferenciado_chave')) < 44):
@@ -423,10 +423,13 @@ class ImportacaoNota(JobCommand):
         return b_dados_validos
 
     def listarErros(self, id, lista, a_tipo: tipoMsg, num_pedido):
+        mensagem = f"Erro ao criar arquivo xml para o pedido {num_pedido}. "
+        erros = ''
         for err in lista:
-            mensagem = f"Erro ao criar arquivo xml para o pedido {num_pedido}. {err}"
-            self.banco.registraLog.mensagem(id, mensagem, a_tipo)
-            self.registro_execucao.erro_execucao(mensagem)
+            erros += err + '. '
+        mensagem += erros
+        self.banco.registraLog.mensagem(id, mensagem, a_tipo)
+        self.registro_execucao.erro_execucao(mensagem)
 
     def novoStatus(self, status_Doc: int, statusAtualPedido: int):
 
