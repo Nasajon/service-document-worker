@@ -291,6 +291,8 @@ class ImportacaoNota(JobCommand):
             if datetime.now() > proximaTentativa:
                 t_pedido.atualizarTentativa(
                     dataHoraPrimeiraTentativa, documento.get('datahora_inclusao'), tentativaAdicionalAtual)
+            elif t_pedido.status() == Status.Aberto.value:
+                t_pedido.updateSituacao(Status.Reemitir.value)
             return True
 
         return False
