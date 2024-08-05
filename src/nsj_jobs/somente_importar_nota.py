@@ -1,4 +1,5 @@
 
+import traceback
 from nsj_jobs.resources.envconfig import EnvConfig
 from nsj_jobs.service_document_cmd import ServiceDocumentCMD
 from nsj_jobs.dao import DAO, Status, StatusDocumento, Tp_Operacao, tipoMsg, Tpedido
