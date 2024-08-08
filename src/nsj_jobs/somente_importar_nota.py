@@ -387,6 +387,9 @@ class ImportacaoNota(JobCommand):
                             'Código do Produto', 'COD_PRODUTO', produto.get('cod_produto'))
                         erroLista.append(strAviso)
 
+                    if 'USO_CONSUMO' in produto.get('cod_produto'):
+                        erroLista.append(f'Produto {produto.get('cod_produto')} de uso e consumo não pode fazer parte do pedido.')
+
                     var_loc_estoq = str(produto.get('localestoque'))
 
                     if (var_loc_estoq != '') and (var_loc_estoq is not None):
