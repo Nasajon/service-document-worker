@@ -1,4 +1,5 @@
 
+import traceback
 from nsj_jobs.resources.envconfig import EnvConfig
 from nsj_jobs.service_document_cmd import ServiceDocumentCMD
 from nsj_jobs.dao import DAO, Status, StatusDocumento, Tp_Operacao, tipoMsg, Tpedido
@@ -33,6 +34,7 @@ class ImportacaoNota(JobCommand):
             path_CancelamentoNFE = self.banco.xml_serviceDocument.obterCaminhoArquivo(
                 74, 0)
 
+            retentar_emissao = self.banco.xml_serviceDocument.retentar_emissao()
             # obtem os pedidos que ja foram processados (xml criados) da tabela de controle
             # obtem os registros de envios de xml em documentos (servicedocument.documentos)
             # atualiza a tabela de pedidos, de acordo com os status do envio do xml em documentos
@@ -127,7 +129,7 @@ class ImportacaoNota(JobCommand):
                                 break
                         elif int(documento.get('status')) in erros_documento:
                             # Se gerou registrou no docfis mas está com erro, rejeita o pedido.
-                            if documento.get('id_docfis') is not None:
+                            if documento.get('id_docfis') is not None and not retentar_emissao:
                                 t_pedido.updateSituacao(Status.Rejeitado.value)
                                 strAviso = f"Erro ao tratar o pedido {var_identificador} no ServiceDocument. {documento.get('mensagem_retorno')}"
                                 registro_execucao.erro_execucao(strAviso)
@@ -289,6 +291,8 @@ class ImportacaoNota(JobCommand):
             if datetime.now() > proximaTentativa:
                 t_pedido.atualizarTentativa(
                     dataHoraPrimeiraTentativa, documento.get('datahora_inclusao'), tentativaAdicionalAtual)
+            elif t_pedido.status() == Status.Aberto.value:
+                t_pedido.updateSituacao(Status.Reemitir.value)
             return True
 
         return False
@@ -391,10 +395,10 @@ class ImportacaoNota(JobCommand):
                     if (var_loc_estoq != '') and (var_loc_estoq is not None):
                         if not self.banco.localEstoqueValido(var_loc_estoq, var_id_Estab):
                             erroLista.append(
-                                'Valor inválido informado para o campo [LOCALESTOQUE] no item.')
+                                'Valor inválido informado para o campo [LOCALESTOQUE] no item')
                     else:
                         erroLista.append(
-                            'Valor não foi informado para o campo [LOCALESTOQUE] no item.')
+                            'Valor não foi informado para o campo [LOCALESTOQUE] no item')
 
                     if (produto.get('documentoreferenciado_chave') is not None) and (produto.get('documentoreferenciado_chave') != ''):
                         if (len(produto.get('documentoreferenciado_chave')) < 44):
@@ -422,10 +426,13 @@ class ImportacaoNota(JobCommand):
         return b_dados_validos
 
     def listarErros(self, id, lista, a_tipo: tipoMsg, num_pedido):
+        mensagem = f"Erro ao criar arquivo xml para o pedido {num_pedido}. "
+        erros = ''
         for err in lista:
-            mensagem = f"Erro ao criar arquivo xml para o pedido {num_pedido}. {err}"
-            self.banco.registraLog.mensagem(id, mensagem, a_tipo)
-            self.registro_execucao.erro_execucao(mensagem)
+            erros += err + '. '
+        mensagem += erros
+        self.banco.registraLog.mensagem(id, mensagem, a_tipo)
+        self.registro_execucao.erro_execucao(mensagem)
 
     def novoStatus(self, status_Doc: int, statusAtualPedido: int):
 

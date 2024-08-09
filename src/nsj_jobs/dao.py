@@ -4,11 +4,9 @@
 import copy
 from decimal import Decimal
 from nsj_jobs.resources.db_adapter import DBAdapter
-from datetime import date
 from datetime import datetime
 import enum
 
-schema = "servicedocument"
 IsEmpty = ""
 
 
@@ -90,22 +88,22 @@ class registra_log:
         valor_Tipo = tipo.value
 
         if self.pode_gravar(id_pedido, msg, valor_Tipo):
-            sql = "Insert into {}.log_execucaojob(id_pedido, mensagem, tipo, id_doc_service_msg ) Values(%s, %s, %s, %s)"
-            sql = sql.format(schema)
+            sql = "Insert into servicedocument.log_execucaojob(id_pedido, mensagem, tipo, id_doc_service_msg ) Values(%s, %s, %s, %s)"
+            sql = sql
             self.conexao.execute(sql, [id_pedido, msg, tipo.value, var_id_doc_msg])
         else:
-            sql = """Update {}.log_execucaojob set ultimaexecucao = %s
+            sql = """Update servicedocument.log_execucaojob set ultimaexecucao = %s
                     where id_pedido = %s and tipo = %s and mensagem = %s"""
 
-            sql = sql.format(schema)
+            sql = sql
             self.conexao.execute(sql, [datetime.now(), id_pedido, valor_Tipo, msg])
 
     def pode_gravar(self, id_pedido: str, msg: str, tipo: int):
 
-        sql = """ SELECT Count(1) as valor FROM {0}.log_execucaojob l
+        sql = """ SELECT Count(1) as valor FROM servicedocument.log_execucaojob l
                 WHERE l.id_pedido = %s AND l.tipo = %s AND l.mensagem  = %s"""
 
-        sql = sql.format(schema)
+        sql = sql
         qry = self.conexao.execute_query_to_dict(sql, [id_pedido, tipo, msg])
 
         return qry[0]["valor"] == 0
@@ -129,6 +127,22 @@ class xml_service_document:
             return None
         else:
             return qry[0]["valor"]
+        
+    def retentar_emissao(self):
+        # 36 é este worker
+        sql = """SELECT c.valor 
+                FROM ns.configuracoes c 
+                WHERE c.campo = 1 AND 
+                aplicacao = 36
+                Limit 1"""
+
+        qry = self.conexao.execute_query_to_dict(sql, [])
+        if len(qry) == 0:
+            return None
+        elif (qry[0]["valor"] is None) or (qry[0]["valor"] == IsEmpty):
+            return None
+        else:
+            return int(qry[0]["valor"])
 
 
 class dir_instalacao_erp:
@@ -180,7 +194,7 @@ class Tpedidos:
                 CFOP,
                 TENTATIVAS_ADICIONAIS, 
                 PRIMEIRA_TENTATIVA                             
-                FROM {}.PEDIDOS  PED
+                FROM servicedocument.PEDIDOS  PED
                 WHERE PED.STATUS in ("""
             + strSituacao
             + """) and
@@ -190,7 +204,7 @@ class Tpedidos:
             + (" LIMIT 10" if limit else "")
         )
 
-        sql = sql.format(schema)
+        sql = sql
         return self.conexao.execute_query_to_dict(sql, [processado])
 
     def obterPedidos_Processados(self, situacao: list):
@@ -206,7 +220,7 @@ class Tpedidos:
 
         sql = (
             """SELECT ID_PEDIDO, NUM_PEDIDO, NUM_EXTERNO, STATUS, TENTATIVAS_ADICIONAIS, PRIMEIRA_TENTATIVA, ULTIMA_TENTATIVA, datahora_processamento, emitir_nota
-                FROM {0}.PEDIDOS  PED
+                FROM servicedocument.PEDIDOS  PED
                 WHERE PED.STATUS in ("""
             + strSituacao
             + """) and
@@ -216,7 +230,7 @@ class Tpedidos:
                 ORDER BY PED.data_hora_criacao"""
         )
 
-        sql = sql.format(schema)
+        sql = sql
         return self.conexao.execute_query_to_dict(sql)
 
 
@@ -342,9 +356,9 @@ class Tpedido:
                 MODALIDADE_FRETE,
                 TRANSPORTADORA,
                 case when VENDAPRESENCIAL then '1' else '' end as VENDAPRESENCIAL                                       
-                FROM {}.PEDIDOS PED WHERE PED.id_pedido = %s"""
+                FROM servicedocument.PEDIDOS PED WHERE PED.id_pedido = %s"""
 
-        sql = sql.format(schema)
+        sql = sql
         pedidos = self.conexao.execute_query_to_dict(sql, [id_pedido])
         if len(pedidos) == 0:
             return None
@@ -374,7 +388,7 @@ class Tpedido:
         pagamentos = copy.deepcopy(self.lstFormaPagamento)
         novaLista = {}
         for pagamento in pagamentos:
-            if not pagamento.get("tipoformapagamento") in novaLista.keys():
+            if pagamento.get("tipoformapagamento") not in novaLista.keys():
                 novaLista[pagamento.get("tipoformapagamento")] = {
                     "tipoformapagamento": pagamento.get("tipoformapagamento"),
                     "parcelas": [],
@@ -396,18 +410,18 @@ class Tpedido:
     def updateSituacao(self, status_value: int):
         idpedido = self.pedido["id_pedido"]
         if idpedido != IsEmpty:
-            sql = "update {}.pedidos set status = %s where id_pedido = %s"
-            sql = sql.format(schema)
+            sql = "update servicedocument.pedidos set status = %s where id_pedido = %s"
+            sql = sql
             self.conexao.execute(sql, [status_value, idpedido])
 
     def updatePedidoProcessado(self, idPedido):
         if idPedido != IsEmpty:
-            sql = """UPDATE {}.pedidos SET
+            sql = """UPDATE servicedocument.pedidos SET
                 processado = TRUE,
                 datahora_processamento = current_timestamp 
             WHERE id_pedido = %s"""
 
-            sql = sql.format(schema)
+            sql = sql
             self.conexao.execute(sql, [idPedido])
 
     def updatePedido(self):
@@ -430,9 +444,7 @@ class Tpedido:
                 msgAviso = IsEmpty
 
             sql = (
-                """update """
-                + schema
-                + """.pedidos set
+                """update servicedocument.pedidos set
             chave_de_acesso = %s , 
             numero_nf = %s ,
             serie_nf = %s , 
@@ -474,9 +486,7 @@ class Tpedido:
                 msgAviso = f"Gerando XML novamente de forma automática para a {tentativa_adicional+1}º tentativa de emissão."
 
             sql = (
-                """update """
-                + schema
-                + """.pedidos set
+                """update servicedocument.pedidos set
                 status = %s ,
                 tentativas_adicionais = %s ,
                 primeira_tentativa = %s ,
@@ -506,9 +516,7 @@ class Tpedido:
             novoStatus = Status.Reemitir.value
 
             sql = (
-                """update """
-                + schema
-                + """.pedidos set
+                """update servicedocument.pedidos set
                 status = %s ,
                 primeira_tentativa = %s
                 where id_pedido = %s """
@@ -544,7 +552,7 @@ class Tpedido:
             """
             with produtos as (
 	        select ite.id_item_pedido,  prod.*, (coalesce(prod.codigodebarras,'') = ite.cod_produto) as cod_barra_igual, ROW_NUMBER() OVER( partition by id_item_pedido    ORDER BY ite.id_item_pedido, (coalesce(prod.codigodebarras,'') = ite.cod_produto) desc) rec_num
-            FROM {}.ITENSPEDIDOS ITE
+            FROM servicedocument.ITENSPEDIDOS ITE
             LEFT JOIN ESTOQUE.PRODUTOS PROD ON ( UPPER(PROD.CODIGO) = UPPER(ITE.COD_PRODUTO) or  UPPER(PROD.codigodebarras) = UPPER(ITE.COD_PRODUTO) )
             WHERE ITE.ID_PEDIDO = %s and not ite.generico
             order by ite.id_item_pedido,  (coalesce(prod.codigodebarras,'') = ite.cod_produto) desc
@@ -555,14 +563,14 @@ class Tpedido:
             + """
                     0 as SEM_SALDO, 
                     '' AS MENSAGEM_ERRO
-                    FROM {}.ITENSPEDIDOS ITE
+                    FROM servicedocument.ITENSPEDIDOS ITE
                     LEFT JOIN produtos PROD on ite.id_item_pedido = prod.id_item_pedido and prod.rec_num = 1         
                     WHERE ITE.ID_PEDIDO = %s and not ite.generico
                     ORDER BY ITE.COD_PRODUTO"""
         )
 
-        sql = sql.format(schema)
-        lstPedidos = self.conexao.execute_query_to_dict(sql, [id_pedido])
+        sql = sql
+        lstPedidos = self.conexao.execute_query_to_dict(sql, [id_pedido, id_pedido])
 
         sql = (
             """SELECT 
@@ -589,11 +597,11 @@ class Tpedido:
                 quantidade,
                 valor_unitario,
                 valor_desconto
-                FROM {}.ITENSPEDIDOS ITE
+                FROM servicedocument.ITENSPEDIDOS ITE
                 WHERE ITE.ID_PEDIDO = %s
                 ORDER BY ITE.COD_PRODUTO"""
 
-        sql = sql.format(schema)
+        sql = sql
         lstServicos = self.conexao.execute_query_to_dict(sql, [id_pedido])
 
         return lstServicos
@@ -609,11 +617,11 @@ class Tpedido:
                 QUANTIDADE,
                 PESO_BRUTO,
                 PESO_LIQUIDO
-                FROM {}.VOLUMES_PEDIDOS
+                FROM servicedocument.VOLUMES_PEDIDOS
                 WHERE ID_PEDIDO = %s
                 ORDER BY NUMERACAO"""
 
-        sql = sql.format(schema)
+        sql = sql
         lstVolumes = self.conexao.execute_query_to_dict(sql, [id_pedido])
 
         return lstVolumes
@@ -628,10 +636,10 @@ class Tpedido:
                     FROM NS.EMPRESAS EMP
                     INNER JOIN NS.ESTABELECIMENTOS EST ON EST.EMPRESA = EMP.EMPRESA 
                     LEFT  JOIN NS.GRUPOSEMPRESARIAIS GRU ON (GRU.GRUPOEMPRESARIAL = EMP.GRUPOEMPRESARIAL)
-                    INNER JOIN {}.PEDIDOS PED  ON ( (EST.RAIZCNPJ || EST.ORDEMCNPJ) = PED.CNPJ_ESTABELECIMENTO ) 
+                    INNER JOIN servicedocument.PEDIDOS PED  ON ( (EST.RAIZCNPJ || EST.ORDEMCNPJ) = PED.CNPJ_ESTABELECIMENTO ) 
                     WHERE ped.id_pedido = %s"""
 
-        sql = sql.format(schema)
+        sql = sql
         qry = self.conexao.execute_query_to_dict(sql, [id_pedido])
         if len(qry) == 0:
             return None
@@ -649,11 +657,11 @@ class Tpedido:
                     coalesce(PESS.inscricaoestadual, '') as inscricaoestadual,
                     (CASE WHEN PESS.indicadorinscricaoestadual = 1 then TRUE ELSE FALSE end) as contribuinteICMS
                     FROM NS.PESSOAS   PESS
-                    INNER JOIN {}.PEDIDOS PED ON(PED.CNPJ_CLIENTE = PESS.CHAVECNPJ)
+                    INNER JOIN servicedocument.PEDIDOS PED ON(PED.CNPJ_CLIENTE = PESS.CHAVECNPJ)
                     WHERE PED.ID_PEDIDO = %s 
                     LIMIT 1 """
 
-        sql = sql.format(schema)
+        sql = sql
         qry = self.conexao.execute_query_to_dict(sql, [id_pedido])
         return qry
 
@@ -752,11 +760,11 @@ class Tpedido:
                 valor_parcela,
                 dt_vencimento,
                 numero
-                FROM {}.pagamentos f
+                FROM servicedocument.pagamentos f
                 WHERE f.id_pedido = %s
                 order by numero ASC, dt_vencimento"""
 
-        sql = sql.format(schema)
+        sql = sql
         return self.conexao.execute_query_to_dict(sql, [id_pedido])
 
 

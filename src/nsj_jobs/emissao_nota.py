@@ -32,7 +32,7 @@ class ImportacaoEmissaoNota(JobCommand):
                 86, 0)
             path_CancelamentoNFE = self.banco.xml_serviceDocument.obterCaminhoArquivo(
                 74, 0)
-
+            retentar_emissao = self.banco.xml_serviceDocument.retentar_emissao()
             # obtem os pedidos que ja foram processados (xml criados) da tabela de controle
             # obtem os registros de envios de xml em documentos (servicedocument.documentos)
             # atualiza a tabela de pedidos, de acordo com os status do envio do xml em documentos
@@ -128,7 +128,7 @@ class ImportacaoEmissaoNota(JobCommand):
                                 break
                         elif int(documento.get('status')) in erros_documento:
                             # Se gerou registrou no docfis mas está com erro, rejeita o pedido.
-                            if documento.get('id_docfis') is not None:
+                            if documento.get('id_docfis') is not None and not retentar_emissao:
                                 t_pedido.updateSituacao(Status.Rejeitado.value)
                                 strAviso = f"Erro ao tratar o pedido {var_identificador} no ServiceDocument. {documento.get('mensagem_retorno')}"
                                 registro_execucao.erro_execucao(strAviso)
@@ -290,6 +290,8 @@ class ImportacaoEmissaoNota(JobCommand):
             if datetime.now() > proximaTentativa:
                 t_pedido.atualizarTentativa(
                     dataHoraPrimeiraTentativa, documento.get('datahora_inclusao'), tentativaAdicionalAtual)
+            elif t_pedido.status() == Status.Aberto.value:
+                t_pedido.updateSituacao(Status.Reemitir.value)
             return True
 
         return False
