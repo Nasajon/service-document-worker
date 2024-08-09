@@ -35,7 +35,8 @@ class Log:
     
     def config_logger(self):
         data = datetime.datetime.now()
-        file_handler = logging.FileHandler(f'{data.strftime("%d-%m-%YT%H_%M_%S")}.log', 'a')
+        os.makedirs('logs', exist_ok=True)
+        file_handler = logging.FileHandler(f'logs/{data.strftime("%d-%m-%YT%H_%M_%S")}.log', 'a')
         stream_handler = logging.StreamHandler(sys.stdout)
 
         logging.basicConfig(
