@@ -127,6 +127,22 @@ class xml_service_document:
             return None
         else:
             return qry[0]["valor"]
+        
+    def retentar_emissao(self):
+        # 36 é este worker
+        sql = """SELECT c.valor 
+                FROM ns.configuracoes c 
+                WHERE c.campo = 1 AND 
+                aplicacao = 36
+                Limit 1"""
+
+        qry = self.conexao.execute_query_to_dict(sql, [])
+        if len(qry) == 0:
+            return None
+        elif (qry[0]["valor"] is None) or (qry[0]["valor"] == IsEmpty):
+            return None
+        else:
+            return int(qry[0]["valor"])
 
 
 class dir_instalacao_erp:
