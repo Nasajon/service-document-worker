@@ -127,6 +127,8 @@ class ImportacaoNota(JobCommand):
                                     'documento')
                                 t_pedido.updatePedido()
                                 break
+                        elif documento.get('mensagem_retorno') == 'Documento já emitido':
+                            continue
                         elif int(documento.get('status')) in erros_documento:
                             # Se gerou registrou no docfis mas está com erro, rejeita o pedido.
                             if documento.get('id_docfis') is not None and not retentar_emissao:
