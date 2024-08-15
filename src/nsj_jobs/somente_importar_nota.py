@@ -1,5 +1,4 @@
 
-import traceback
 from nsj_jobs.resources.envconfig import EnvConfig
 from nsj_jobs.service_document_cmd import ServiceDocumentCMD
 from nsj_jobs.dao import DAO, Status, StatusDocumento, Tp_Operacao, tipoMsg, Tpedido
@@ -127,8 +126,6 @@ class ImportacaoNota(JobCommand):
                                     'documento')
                                 t_pedido.updatePedido()
                                 break
-                        elif documento.get('mensagem_retorno') == 'Documento já emitido':
-                            continue
                         elif int(documento.get('status')) in erros_documento:
                             # Se gerou registrou no docfis mas está com erro, rejeita o pedido.
                             if documento.get('id_docfis') is not None and not retentar_emissao:
