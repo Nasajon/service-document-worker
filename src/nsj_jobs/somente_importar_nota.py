@@ -42,9 +42,9 @@ class ImportacaoNota(JobCommand):
                                StatusDocumento.sdcErroEmissao.value,
                                StatusDocumento.sdcErroConsulta.value,
                                StatusDocumento.sdcRespondidoComFalha.value]
-            documento_situacoes = [StatusDocumento.sdcTransmitido,
-                                    StatusDocumento.sdcImportado,
-                                    StatusDocumento.sdcErroProcessamento,
+            documento_situacoes_ok = [StatusDocumento.sdcTransmitido,
+                                    StatusDocumento.sdcImportado]
+            documento_situacoes_erro = [ StatusDocumento.sdcErroProcessamento,
                                     StatusDocumento.sdcErroEmissao,
                                     StatusDocumento.sdcErroConsulta,
                                     StatusDocumento.sdcRespondidoComFalha]
@@ -63,7 +63,9 @@ class ImportacaoNota(JobCommand):
                 var_id_pedido = pedido.get('id_pedido')
                 var_identificador = int(pedido.get('num_pedido'))
                 documentos = self.banco.obterDocumentosEnviados(
-                    var_identificador, documento_situacoes)
+                    var_identificador, documento_situacoes_ok)
+                documentos.extend(self.banco.obterDocumentosEnviados(
+                    var_identificador, documento_situacoes_erro))
                 registro_execucao.informativo(
                     f'Obtendo os registros do pedido de id: {var_id_pedido} e número: {var_identificador}.')
 

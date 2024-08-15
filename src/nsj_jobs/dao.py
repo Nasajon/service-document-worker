@@ -226,7 +226,6 @@ class Tpedidos:
             + """) and
                 PED.Processado = True
                 AND PED.EMITIR = True
-                And Ped.chave_de_acesso Is null
                 ORDER BY PED.data_hora_criacao"""
         )
 
