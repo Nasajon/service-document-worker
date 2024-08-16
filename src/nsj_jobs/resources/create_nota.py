@@ -209,8 +209,8 @@ def montar_xml_nfe(t_Pedido: Tpedido, arquivo_xml):
     createNodeChild("MUNICIPIO", t_Pedido.lstEndCliente[0]["municipio"], doc, nivel_2)
     createNodeChild("UF", t_Pedido.lstEndCliente[0]["uf"], doc, nivel_2)
     createNodeChild("CEP", t_Pedido.lstEndCliente[0]["cep"], doc, nivel_2)
-    createNodeChild("PAIS", t_Pedido.lstEndCliente[0]["pais"], doc, nivel_2)
-    createNodeChild("PAISNOME", t_Pedido.lstEndCliente[0]["paisnome"], doc, nivel_2)
+    createNodeChild("PAIS", t_Pedido.lstEndCliente[0]["pais"] if t_Pedido.lstEndCliente[0]["pais"] else '1058', doc, nivel_2)
+    createNodeChild("PAISNOME", t_Pedido.lstEndCliente[0]["paisnome"] if t_Pedido.lstEndCliente[0]["paisnome"] else 'Brasil', doc, nivel_2)
     createNodeChild("TELEFONE", t_Pedido.lstEndCliente[0]["telefone"], doc, nivel_2)
     createNodeChild("REFERENCIA", t_Pedido.lstEndCliente[0]["referencia"], doc, nivel_2)
 

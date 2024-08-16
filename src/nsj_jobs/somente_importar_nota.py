@@ -40,14 +40,12 @@ class ImportacaoNota(JobCommand):
 
             erros_documento = [StatusDocumento.sdcErroProcessamento.value,
                                StatusDocumento.sdcErroEmissao.value,
-                               StatusDocumento.sdcErroConsulta.value,
-                               StatusDocumento.sdcRespondidoComFalha.value]
+                               StatusDocumento.sdcErroConsulta.value]
             documento_situacoes_ok = [StatusDocumento.sdcTransmitido,
                                     StatusDocumento.sdcImportado]
             documento_situacoes_erro = [ StatusDocumento.sdcErroProcessamento,
                                     StatusDocumento.sdcErroEmissao,
-                                    StatusDocumento.sdcErroConsulta,
-                                    StatusDocumento.sdcRespondidoComFalha]
+                                    StatusDocumento.sdcErroConsulta]
             # Aberto = 0 | Reemitir = 3 | Cancelamento_Fiscal = 5
             situacoes = [Status.Aberto, Status.Reemitir,
                          Status.Cancelamento_Fiscal]
