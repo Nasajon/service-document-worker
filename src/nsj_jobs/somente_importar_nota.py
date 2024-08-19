@@ -139,7 +139,7 @@ class ImportacaoNota(JobCommand):
                                 strAviso = f"Erro ao tratar o pedido {var_identificador} no ServiceDocument. {documento.get('mensagem_retorno')}"
                                 registro_execucao.erro_execucao(strAviso)
                                 self.banco.registraLog.mensagem(
-                                    var_id_pedido, strAviso, tipoMsg.serviceDocument)
+                                    var_id_pedido, strAviso, tipoMsg.serviceDocument, documento.get('documento'))
 
                                 # Verifica se deve tentar de novo. Se não puder tentar de novo, rejeita
                                 if not self.iterarTentativaParaServiceDocument(t_pedido, documento):
