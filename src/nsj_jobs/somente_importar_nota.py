@@ -193,20 +193,20 @@ class ImportacaoNota(JobCommand):
                                     t_pedido.updateSituacao(Status.Rejeitado.value)
 
                                 break
-                            
-                tentativaAdicionalAtual = t_pedido.pedido["tentativas_adicionais"] + 1
-                proximaTentativa = t_pedido.pedido["primeira_tentativa"] + timedelta(
-                    minutes=tentativaAdicionalAtual * self.intervalo_tentativas
-                )
-                if (
-                    pedido.get("status") == Status.Reemitir.value
-                    and datetime.now() > proximaTentativa
-                ):
-                    t_pedido.atualizarTentativa(
-                        t_pedido.pedido["primeira_tentativa"],
-                        datetime.now(),
-                        tentativaAdicionalAtual,
+                else:            
+                    tentativaAdicionalAtual = t_pedido.pedido["tentativas_adicionais"] + 1
+                    proximaTentativa = t_pedido.pedido["primeira_tentativa"] + timedelta(
+                        minutes=tentativaAdicionalAtual * self.intervalo_tentativas
                     )
+                    if (
+                        pedido.get("status") == Status.Reemitir.value
+                        and datetime.now() > proximaTentativa
+                    ):
+                        t_pedido.atualizarTentativa(
+                            t_pedido.pedido["primeira_tentativa"],
+                            datetime.now(),
+                            tentativaAdicionalAtual,
+                        )
 
                 # fim loop documento enviados
             # fim loop pedidos.
