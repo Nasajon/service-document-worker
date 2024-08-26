@@ -406,12 +406,12 @@ class Tpedido:
 
         self.lstFormaPagamento = [novaLista[i] for i in novaLista.keys()]
 
-    def updateSituacao(self, status_value: int):
+    def updateSituacao(self, status_value: int, id_docfis : str):
         idpedido = self.pedido["id_pedido"]
         if idpedido != IsEmpty:
-            sql = "update servicedocument.pedidos set status = %s where id_pedido = %s"
+            sql = "update servicedocument.pedidos set status = %s, id_docfis = coalesce(%s,id_docfis) where id_pedido = %s"
             sql = sql
-            self.conexao.execute(sql, [status_value, idpedido])
+            self.conexao.execute(sql, [status_value, id_docfis, idpedido])
 
     def updatePedidoProcessado(self, idPedido):
         if idPedido != IsEmpty:
