@@ -166,7 +166,7 @@ class ImportacaoNota(JobCommand):
                                 documento.get("id_docfis") is not None
                                 and not retentar_emissao
                             ):
-                                t_pedido.updateSituacao(Status.Rejeitado.value)
+                                t_pedido.updateSituacao(Status.Rejeitado.value,  documento.get("id_docfis"))
                                 strAviso = f"Erro ao tratar o pedido {var_identificador} no ServiceDocument. {documento.get('mensagem_retorno')}"
                                 registro_execucao.erro_execucao(strAviso)
                                 self.banco.registraLog.mensagem(
@@ -190,7 +190,7 @@ class ImportacaoNota(JobCommand):
                                 if not self.iterarTentativaParaServiceDocument(
                                     t_pedido, documento
                                 ):
-                                    t_pedido.updateSituacao(Status.Rejeitado.value)
+                                    t_pedido.updateSituacao(Status.Rejeitado.value, documento.get('id_docfis'))
 
                                 break
                 else:            
@@ -380,7 +380,7 @@ class ImportacaoNota(JobCommand):
                     tentativaAdicionalAtual,
                 )
             elif t_pedido.status() == Status.Aberto.value:
-                t_pedido.updateSituacao(Status.Reemitir.value)
+                t_pedido.updateSituacao(Status.Reemitir.value, documento.get("id_docfis"))
             return True
 
         return False
