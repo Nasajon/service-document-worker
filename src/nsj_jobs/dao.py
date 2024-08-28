@@ -753,7 +753,7 @@ class Tpedido:
                 f.cod_tipopagamento,
                 (SELECT a.codigo 
                         FROM ns.formaspagamentos a
-                        WHERE lower(a.descricao) = lower(f.cod_tipopagamento)
+                        WHERE lower(a.descricao) = lower(f.cod_tipopagamento) or lower(a.codigo) = lower(f.cod_tipopagamento)
                         LIMIT 1
                 ) AS tipoformapagamento,
                 valor_parcela,
