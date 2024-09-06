@@ -193,7 +193,7 @@ class ImportacaoNota(JobCommand):
                                     t_pedido.updateSituacao(Status.Rejeitado.value, documento.get('id_docfis'))
 
                                 break
-                else:            
+                elif t_pedido.pedido["primeira_tentativa"]:            
                     tentativaAdicionalAtual = t_pedido.pedido["tentativas_adicionais"] + 1
                     proximaTentativa = t_pedido.pedido["primeira_tentativa"] + timedelta(
                         minutes=tentativaAdicionalAtual * self.intervalo_tentativas
