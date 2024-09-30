@@ -656,7 +656,8 @@ class Tpedido:
                     coalesce(PESS.inscricaoestadual, '') as inscricaoestadual,
                     (CASE WHEN PESS.indicadorinscricaoestadual = 1 then TRUE ELSE FALSE end) as contribuinteICMS
                     FROM NS.PESSOAS   PESS
-                    INNER JOIN servicedocument.PEDIDOS PED ON(PED.CNPJ_CLIENTE = PESS.CHAVECNPJ)
+                    INNER JOIN ns.conjuntosclientes cc ON cc.registro=pess.id
+                    INNER JOIN servicedocument.PEDIDOS PED ON PED.CNPJ_CLIENTE = PESS.CHAVECNPJ
                     WHERE PED.ID_PEDIDO = %s 
                     LIMIT 1 """
 
